@@ -7,8 +7,7 @@ import {
   FileText,
   CheckCircle2,
   Trash2,
-  Download,
-  Loader2
+  Download
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,7 @@ const mockDocuments: Document[] = [
 ];
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+  const [documents] = useState<Document[]>(mockDocuments);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = (e: React.DragEvent) => {
