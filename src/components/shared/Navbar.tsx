@@ -37,14 +37,9 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Desktop CTAs */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Log In
-              </Button>
-            </Link>
-            <Link href="/signup">
+          {/* Desktop CTA */}
+          <div className="hidden md:flex items-center">
+            <Link href="#pricing">
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                 Get Started
               </Button>
@@ -79,13 +74,8 @@ export function Navbar() {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-4 border-t border-gray-200 space-y-2">
-              <Link href="/login" className="block">
-                <Button variant="outline" className="w-full">
-                  Log In
-                </Button>
-              </Link>
-              <Link href="/signup" className="block">
+            <div className="pt-4 border-t border-gray-200">
+              <Link href="#pricing" className="block" onClick={() => setIsOpen(false)}>
                 <Button className="w-full bg-blue-600 hover:bg-blue-700">
                   Get Started
                 </Button>

@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Check, Sparkles } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PRICING_TIERS } from '@/lib/constants';
@@ -76,17 +75,15 @@ export function Pricing() {
                   ))}
                 </ul>
 
-                <Link href="/signup">
-                  <Button
-                    className={`w-full py-6 text-lg rounded-xl ${
-                      tier.popular
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200'
-                    }`}
-                  >
-                    Get Started
-                  </Button>
-                </Link>
+                <Button
+                  className={`w-full py-6 text-lg rounded-xl ${
+                    tier.popular
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200'
+                  }`}
+                >
+                  Get Started
+                </Button>
               </Card>
             </motion.div>
           ))}

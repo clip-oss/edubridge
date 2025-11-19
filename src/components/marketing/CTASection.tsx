@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export function CTASection() {
@@ -32,15 +31,13 @@ export function CTASection() {
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
         >
-          <Link href="/signup">
-            <Button
-              size="lg"
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              Start Your Application
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            Start Your Application
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
         </motion.div>
       </div>
     </section>

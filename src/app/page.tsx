@@ -7,19 +7,25 @@ import { Testimonials } from '@/components/marketing/Testimonials';
 import { SchoolLogos } from '@/components/marketing/SchoolLogos';
 import { FAQ } from '@/components/marketing/FAQ';
 import { CTASection } from '@/components/marketing/CTASection';
+import { Navbar } from '@/components/shared/Navbar';
+import { Footer } from '@/components/marketing/Footer';
 
 export default function HomePage() {
   return (
     <>
-      <Hero />
-      <SchoolLogos />
-      <Features />
-      <Stats />
-      <HowItWorks />
-      <Pricing />
-      <Testimonials />
-      <FAQ />
-      <CTASection />
+      <Navbar />
+      <main>
+        <Hero />
+        <SchoolLogos />
+        <Features />
+        <Stats />
+        <HowItWorks />
+        <Pricing />
+        <Testimonials />
+        <FAQ />
+        <CTASection />
+      </main>
+      <Footer />
     </>
   );
 }
