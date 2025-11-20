@@ -2,41 +2,50 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Sparkles, CheckCircle, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 export default function EssayPage() {
   const [essay, setEssay] = useState('')
-  const [feedback, setFeedback] = useState<null | {
-    score: number
-    strengths: string[]
-    improvements: string[]
-  }>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [targetUniversity, setTargetUniversity] = useState('')
+  const [essayPrompt, setEssayPrompt] = useState('')
+  const [feedback, setFeedback] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
 
-  const handleAnalyze = async () => {
-    if (!essay.trim()) return
+  const handleGetFeedback = async () => {
+    setLoading(true)
+    setFeedback(null)
 
-    setIsAnalyzing(true)
+    try {
+      const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
 
-    // Simulate AI analysis
-    await new Promise(resolve => setTimeout(resolve, 2000))
+      const response = await fetch('https://anaav.app.n8n.cloud/webhook/essay-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          essay: essay,
+          user_name: user.name || 'Student',
+          target_university: targetUniversity,
+          prompt: essayPrompt,
+          interests: user.goal || ''
+        })
+      })
 
-    setFeedback({
-      score: 72,
-      strengths: [
-        'Strong opening that captures attention',
-        'Good use of specific examples',
-        'Clear connection to your goals'
-      ],
-      improvements: [
-        'Add more personal reflection on challenges faced',
-        'Strengthen the conclusion with future aspirations',
-        'Consider varying sentence structure for better flow'
-      ]
-    })
+      const data = await response.json()
 
-    setIsAnalyzing(false)
+      if (data.success && data.feedback) {
+        setFeedback(data.feedback)
+      } else {
+        throw new Error('Failed to get feedback')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to get AI feedback. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -58,6 +67,30 @@ export default function EssayPage() {
             </div>
           </div>
 
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Target University</label>
+            <input
+              type="text"
+              value={targetUniversity}
+              onChange={(e) => setTargetUniversity(e.target.value)}
+              placeholder="e.g. University of Oxford, MIT, Stanford..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Essay Prompt</label>
+            <input
+              type="text"
+              value={essayPrompt}
+              onChange={(e) => setEssayPrompt(e.target.value)}
+              placeholder="Why do you want to study Computer Science?"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Your Essay</label>
             <textarea
@@ -71,49 +104,91 @@ export default function EssayPage() {
           </div>
 
           <Button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing || !essay.trim()}
+            onClick={handleGetFeedback}
+            disabled={!essay || !targetUniversity || !essayPrompt || loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6"
           >
-            {isAnalyzing ? 'Analyzing...' : 'Get AI Feedback'}
+            {loading ? 'Analyzing...' : 'Get AI Feedback'}
           </Button>
 
           {feedback && (
             <div className="mt-8 space-y-6">
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
-                <span className="font-semibold">Essay Score</span>
-                <span className="text-3xl font-bold text-blue-600">{feedback.score}/100</span>
+              {/* Overall Score */}
+              <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+                <p className="text-sm text-gray-600 mb-2">Overall Score</p>
+                <p className="text-5xl font-bold text-blue-600">{feedback.score_overall}/100</p>
               </div>
 
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  Strengths
-                </h3>
-                <ul className="space-y-2">
-                  {feedback.strengths.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <span className="text-green-500 mt-1">•</span>
-                      {item}
-                    </li>
+              {/* Score Breakdown */}
+              {feedback.scores_breakdown && (
+                <div className="grid grid-cols-5 gap-2">
+                  {Object.entries(feedback.scores_breakdown).map(([key, value]) => (
+                    <div key={key} className="text-center p-2 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-500 capitalize">{key.replace('_', ' ')}</p>
+                      <p className="text-lg font-bold text-gray-800">{value as number}</p>
+                    </div>
                   ))}
-                </ul>
-              </div>
+                </div>
+              )}
 
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-orange-500" />
-                  Areas for Improvement
-                </h3>
-                <ul className="space-y-2">
-                  {feedback.improvements.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <span className="text-orange-500 mt-1">•</span>
-                      {item}
-                    </li>
+              {/* University Context */}
+              {feedback.university_context && (
+                <div className="p-4 bg-blue-50 rounded-xl">
+                  <h3 className="font-semibold text-blue-700 mb-2">What {targetUniversity} Looks For</h3>
+                  <p className="text-sm text-gray-700">{feedback.university_context.what_they_look_for}</p>
+                </div>
+              )}
+
+              {/* Overall Assessment */}
+              {feedback.overall_assessment && (
+                <div>
+                  <h3 className="font-semibold mb-2">Overall Assessment</h3>
+                  <p className="text-gray-700">{feedback.overall_assessment}</p>
+                </div>
+              )}
+
+              {/* Strengths */}
+              {feedback.strengths && feedback.strengths.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-green-600 mb-2">✓ Strengths</h3>
+                  <ul className="space-y-2">
+                    {feedback.strengths.map((s: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                        <span className="text-green-500">•</span>{s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Issues */}
+              {feedback.issues && feedback.issues.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-orange-600 mb-2">⚠ Issues to Fix</h3>
+                  {feedback.issues.map((issue: any, i: number) => (
+                    <div key={i} className="mb-4 p-4 bg-orange-50 rounded-lg">
+                      <p className="text-sm font-medium text-orange-800">{issue.type} - {issue.location}</p>
+                      <p className="text-sm text-gray-600 mt-1"><strong>Current:</strong> &quot;{issue.current_text}&quot;</p>
+                      <p className="text-sm text-green-700 mt-1"><strong>Better:</strong> &quot;{issue.suggested_rewrite}&quot;</p>
+                      <p className="text-xs text-gray-500 mt-1">{issue.reason}</p>
+                    </div>
                   ))}
-                </ul>
-              </div>
+                </div>
+              )}
+
+              {/* Action Plan */}
+              {feedback.action_plan && feedback.action_plan.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-blue-600 mb-2">📋 Action Plan</h3>
+                  <ul className="space-y-2">
+                    {feedback.action_plan.map((action: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                        <span className="text-blue-500 font-bold">{i + 1}.</span>{action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
