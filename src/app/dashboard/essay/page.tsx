@@ -35,8 +35,13 @@ export default function EssayPage() {
 
       const data = await response.json()
 
-      if (data.success && data.feedback) {
-        setFeedback(data.feedback)
+      // Use consensus for the main feedback
+      if (data.success && data.consensus) {
+        setFeedback({
+          ...data.consensus,
+          judgeA: data.judgeA,
+          judgeB: data.judgeB
+        })
       } else {
         throw new Error('Failed to get feedback')
       }
