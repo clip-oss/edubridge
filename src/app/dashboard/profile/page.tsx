@@ -124,6 +124,7 @@ export default function ProfilePage() {
           setProfile(prev => ({
             ...prev,
             ...data,
+            need_scholarship: data.scholarship_needed || false,
             test_scores: data.test_scores || []
           }))
         }
