@@ -105,8 +105,11 @@ export default function SchoolsPage() {
 
       const data = await response.json()
 
-      if (data.success && data.universities) {
-        setSchools(data.universities)
+      // Handle array response with result.universities
+      if (Array.isArray(data) && data[0]?.result?.universities) {
+        setSchools(data[0].result.universities)
+      } else if (data.result?.universities) {
+        setSchools(data.result.universities)
       } else if (data.universities) {
         setSchools(data.universities)
       } else {
@@ -465,10 +468,33 @@ export default function SchoolsPage() {
                     <div className="h-3 bg-gradient-to-r from-blue-500 to-purple-600" />
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="text-xl font-bold">{school.name}</h3>
-                        {school.match_score && (
+                        <div>
+                          <h3 className="text-xl font-bold">{school.name}</h3>
+                          {school.rank && (
+                            <span className="text-xs text-gray-500">#{school.rank} Match</span>
+                          )}
+                        </div>
+                        {school.match_percentage && (
                           <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                            {school.match_score}% Match
+                            {school.match_percentage}%
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Match Type & Admission Chance */}
+                      <div className="flex gap-2 mb-3">
+                        {school.match_type && (
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            school.match_type === 'Safety' ? 'bg-green-100 text-green-700' :
+                            school.match_type === 'Target' ? 'bg-blue-100 text-blue-700' :
+                            'bg-orange-100 text-orange-700'
+                          }`}>
+                            {school.match_type}
+                          </span>
+                        )}
+                        {school.admission_chance && (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                            {school.admission_chance} Chance
                           </span>
                         )}
                       </div>
@@ -476,45 +502,72 @@ export default function SchoolsPage() {
                       <div className="space-y-2 mb-4">
                         {school.location && (
                           <div className="flex items-center gap-2 text-gray-600 text-sm">
-                            <MapPin className="w-4 h-4" />
+                            <MapPin className="w-4 h-4 flex-shrink-0" />
                             {school.location}
                           </div>
                         )}
-                        {school.tuition && (
+                        {school.tuition_usd && (
                           <div className="flex items-center gap-2 text-gray-600 text-sm">
-                            <DollarSign className="w-4 h-4" />
-                            {school.tuition}
+                            <DollarSign className="w-4 h-4 flex-shrink-0" />
+                            ${school.tuition_usd.toLocaleString()}/year
                           </div>
                         )}
-                        {school.acceptance_rate && (
+                        {school.application_deadline && (
                           <div className="flex items-center gap-2 text-gray-600 text-sm">
-                            <Users className="w-4 h-4" />
-                            {school.acceptance_rate} acceptance rate
+                            <span className="w-4 h-4 flex-shrink-0 text-center">📅</span>
+                            Deadline: {school.application_deadline}
+                          </div>
+                        )}
+                        {school.english_requirement && (
+                          <div className="flex items-center gap-2 text-gray-600 text-sm">
+                            <Globe className="w-4 h-4 flex-shrink-0" />
+                            {school.english_requirement}
                           </div>
                         )}
                       </div>
 
-                      {school.programs && school.programs.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {school.programs.slice(0, 3).map((program: string, i: number) => (
-                            <span key={i} className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">
-                              {program}
-                            </span>
+                      {/* Scholarship */}
+                      {school.scholarship_available && (
+                        <div className="mb-3 p-2 bg-yellow-50 rounded-lg">
+                          <p className="text-xs font-medium text-yellow-800">💰 {school.scholarship_details || 'Scholarships available'}</p>
+                        </div>
+                      )}
+
+                      {/* Why Good Fit */}
+                      {school.why_good_fit && school.why_good_fit.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs font-medium text-gray-700 mb-1">Why it&apos;s a good fit:</p>
+                          <ul className="space-y-1">
+                            {school.why_good_fit.slice(0, 2).map((reason: string, i: number) => (
+                              <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
+                                <span className="text-green-500">✓</span> {reason}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Concerns */}
+                      {school.potential_concerns && school.potential_concerns.length > 0 && (
+                        <div className="mb-3">
+                          {school.potential_concerns.map((concern: string, i: number) => (
+                            <p key={i} className="text-xs text-orange-600 flex items-start gap-1">
+                              <span>⚠</span> {concern}
+                            </p>
                           ))}
                         </div>
                       )}
 
-                      {school.why_good_fit && (
-                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{school.why_good_fit}</p>
+                      {/* Application Tip */}
+                      {school.application_tip && (
+                        <div className="p-2 bg-blue-50 rounded-lg mb-3">
+                          <p className="text-xs text-blue-700">💡 {school.application_tip}</p>
+                        </div>
                       )}
 
-                      {school.website && (
-                        <a href={school.website} target="_blank" rel="noopener noreferrer">
-                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                            Visit Website <ExternalLink className="w-4 h-4 ml-2" />
-                          </Button>
-                        </a>
-                      )}
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                        Learn More <ExternalLink className="w-4 h-4 ml-2" />
+                      </Button>
                     </div>
                   </div>
                 ))}
