@@ -249,25 +249,27 @@ export default function ProfilePage() {
 
     setSaving(true)
 
+    // Map form fields to exact database column names
     const profileData = {
       id: user.id,
+      email: user.email,
       full_name: profile.full_name,
+      avatar_url: profile.avatar_url,
       phone: profile.phone,
       country_origin: profile.country_origin,
-      date_of_birth: profile.date_of_birth,
-      avatar_url: profile.avatar_url,
+      date_of_birth: profile.date_of_birth || null,
       education_level: profile.education_level,
       school_name: profile.school_name,
       grading_system: profile.grading_system,
       grade_value: profile.grade_value,
-      graduation_year: profile.graduation_year,
+      graduation_year: profile.graduation_year || null,
       test_scores: profile.test_scores,
       degree_type: profile.degree_type,
       fields_of_interest: profile.fields_of_interest,
       preferred_countries: profile.preferred_countries,
       budget_min: profile.budget_min,
       budget_max: profile.budget_max,
-      need_scholarship: profile.need_scholarship,
+      scholarship_needed: profile.need_scholarship,
       target_start_year: profile.target_start_year,
       cv_url: profile.cv_url,
       cv_filename: profile.cv_filename,
@@ -289,6 +291,7 @@ export default function ProfilePage() {
     }
 
     console.log('✅ Profile saved successfully:', data)
+    alert('Profile saved!')
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
     setSaving(false)
