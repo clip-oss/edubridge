@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const cookieStore = await cookies()
     const supabase = createServerClient(
       'https://mbbylvfsusypuvxeufdc.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iYnlsdmZzdXN5cHV2eGV1ZmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIxOTg4NzgsImV4cCI6MjA0Nzc3NDg3OH0.Ej8x7xiMXENskHK0M3L0mbwhUvlYUl6Fazt1cbkq-dE',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iYnlsdmZzdXN5cHV2eGV1ZmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1ODczNzQsImV4cCI6MjA3OTE2MzM3NH0.8cVMVs9dt6Tz6pIOVITqtoG_Bq581_rA8M2qzhWwvDM',
       {
         cookies: {
           getAll() {
