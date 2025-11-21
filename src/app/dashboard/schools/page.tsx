@@ -565,9 +565,17 @@ export default function SchoolsPage() {
                         </div>
                       )}
 
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                        Learn More <ExternalLink className="w-4 h-4 ml-2" />
-                      </Button>
+                      {school.website ? (
+                        <a href={school.website} target="_blank" rel="noopener noreferrer">
+                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                            Learn More <ExternalLink className="w-4 h-4 ml-2" />
+                          </Button>
+                        </a>
+                      ) : (
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                          Learn More <ExternalLink className="w-4 h-4 ml-2" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
