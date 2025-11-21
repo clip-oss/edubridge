@@ -285,41 +285,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Profile Photo */}
-      <div className="bg-white rounded-xl p-6 mb-6 shadow-sm flex items-center gap-6">
-        <div className="relative">
-          <div
-            onClick={() => photoInputRef.current?.click()}
-            className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
-          >
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : uploadingPhoto ? (
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            ) : (
-              <Camera className="w-8 h-8 text-blue-600" />
-            )}
-          </div>
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoUpload}
-            className="hidden"
-          />
-        </div>
-        <div>
-          <h3 className="font-semibold">{profile.full_name || 'Your Name'}</h3>
-          <p className="text-sm text-gray-500">{user?.email}</p>
-          <button
-            onClick={() => photoInputRef.current?.click()}
-            className="text-sm text-blue-600 hover:text-blue-700 mt-1"
-          >
-            Change photo
-          </button>
-        </div>
-      </div>
-
       {/* Personal Info */}
       <div className="bg-white rounded-xl shadow-sm mb-4 overflow-hidden">
         <button
@@ -336,51 +301,96 @@ export default function ProfilePage() {
         </button>
 
         {expandedSections.personal && (
-          <div className="px-6 pb-6 grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Full Name</label>
-              <input
-                type="text"
-                name="full_name"
-                value={profile.full_name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
+          <div className="px-6 pb-6">
+            {/* Profile Photo */}
+            <div className="flex items-center gap-6 mb-6 pb-6 border-b">
+              <div className="relative">
+                <div
+                  onClick={() => photoInputRef.current?.click()}
+                  className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity overflow-hidden"
+                >
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  ) : uploadingPhoto ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                  ) : (
+                    <Camera className="w-6 h-6 text-blue-600" />
+                  )}
+                </div>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Profile Photo</p>
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  {profile.avatar_url ? 'Change photo' : 'Upload photo'}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Phone</label>
-              <input
-                type="tel"
-                name="phone"
-                value={profile.phone}
-                onChange={handleChange}
-                placeholder="+1 234 567 8900"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Country of Origin</label>
-              <select
-                name="country_origin"
-                value={profile.country_origin}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select country</option>
-                {countries.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date of Birth</label>
-              <input
-                type="date"
-                name="date_of_birth"
-                value={profile.date_of_birth}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Full Name</label>
+                <input
+                  type="text"
+                  name="full_name"
+                  value={profile.full_name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                  type="email"
+                  value={user?.email || ''}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={profile.phone}
+                  onChange={handleChange}
+                  placeholder="+1 234 567 8900"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Country of Origin</label>
+                <select
+                  name="country_origin"
+                  value={profile.country_origin}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select country</option>
+                  {countries.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Date of Birth</label>
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  value={profile.date_of_birth}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -441,7 +451,7 @@ export default function ProfilePage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Grade</label>
+              <label className="block text-sm font-medium mb-1">Grade/Average</label>
               {getGradingSystem()?.type === 'select' ? (
                 <select
                   name="grade_value"
@@ -449,7 +459,7 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">Select grade</option>
+                  <option value="">Select classification</option>
                   {getGradingSystem()?.options?.map((opt: string) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
@@ -463,6 +473,15 @@ export default function ProfilePage() {
                   min={getGradingSystem()?.min}
                   max={getGradingSystem()?.max}
                   step={getGradingSystem()?.step || 1}
+                  placeholder={
+                    profile.grading_system === 'moldova' ? 'Enter grade 1-10' :
+                    profile.grading_system === 'us' ? 'Enter GPA 0-4.0' :
+                    profile.grading_system === 'germany' ? 'Enter grade 1.0-5.0 (1.0 best)' :
+                    profile.grading_system === 'france' ? 'Enter grade 0-20' :
+                    profile.grading_system === 'ib' ? 'Enter grade 1-7' :
+                    profile.grading_system === 'percentage' ? 'Enter percentage 0-100' :
+                    `${getGradingSystem()?.min}-${getGradingSystem()?.max}`
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               )}
