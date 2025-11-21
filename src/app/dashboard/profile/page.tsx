@@ -78,6 +78,8 @@ export default function ProfilePage() {
 
   const [showTestDropdown, setShowTestDropdown] = useState(false)
   const [testSearch, setTestSearch] = useState('')
+  const [selectedTest, setSelectedTest] = useState<any>(null)
+  const [tempTestValue, setTempTestValue] = useState('')
 
   const [profile, setProfile] = useState({
     full_name: '',
@@ -201,14 +203,28 @@ export default function ProfilePage() {
     setUploadingCV(false)
   }
 
-  const addTestScore = (test: any) => {
-    if (profile.test_scores.find(t => t.id === test.id)) return
+  const selectTestForAdding = (test: any) => {
+    setSelectedTest(test)
+    setTempTestValue('')
+  }
+
+  const confirmAddTest = () => {
+    if (!selectedTest || !tempTestValue) return
+    if (profile.test_scores.find(t => t.id === selectedTest.id)) return
+
     setProfile(prev => ({
       ...prev,
-      test_scores: [...prev.test_scores, { id: test.id, name: test.name, value: '' }]
+      test_scores: [...prev.test_scores, { id: selectedTest.id, name: selectedTest.name, value: tempTestValue }]
     }))
+    setSelectedTest(null)
+    setTempTestValue('')
     setShowTestDropdown(false)
     setTestSearch('')
+  }
+
+  const cancelAddTest = () => {
+    setSelectedTest(null)
+    setTempTestValue('')
   }
 
   const updateTestScore = (id: string, value: string) => {
@@ -564,94 +580,157 @@ export default function ProfilePage() {
             {/* Added test scores as chips */}
             {profile.test_scores.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {profile.test_scores.map(test => {
-                  const testDef = Object.values(testCategories).flat().find(t => t.id === test.id)
-                  return (
-                    <div key={test.id} className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-                      <span className="text-sm font-medium">{test.name}</span>
-                      {testDef?.type === 'select' ? (
-                        <select
-                          value={test.value}
-                          onChange={(e) => updateTestScore(test.id, e.target.value)}
-                          className="text-sm bg-white border border-gray-300 rounded px-2 py-1"
-                        >
-                          <option value="">Select</option>
-                          {testDef.options?.map((opt: string) => (
-                            <option key={opt} value={opt}>{opt}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type={testDef?.type === 'text' ? 'text' : 'number'}
-                          value={test.value}
-                          onChange={(e) => updateTestScore(test.id, e.target.value)}
-                          placeholder={testDef?.placeholder || `${testDef?.min || 0}-${testDef?.max || 100}`}
-                          min={testDef?.min}
-                          max={testDef?.max}
-                          step={testDef?.step}
-                          className="w-20 text-sm bg-white border border-gray-300 rounded px-2 py-1"
-                        />
-                      )}
-                      <button
-                        onClick={() => removeTestScore(test.id)}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )
-                })}
+                {profile.test_scores.map(test => (
+                  <div key={test.id} className="flex items-center gap-1 bg-blue-50 text-blue-700 rounded-full px-3 py-1.5">
+                    <span className="text-sm font-medium">{test.name}: {test.value}</span>
+                    <button
+                      onClick={() => removeTestScore(test.id)}
+                      className="ml-1 text-blue-400 hover:text-red-500"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Add test button and dropdown */}
-            <div className="relative">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowTestDropdown(!showTestDropdown)}
-                className="w-full justify-center"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Test Score
-              </Button>
+            {profile.test_scores.length === 0 && (
+              <p className="text-sm text-gray-500 mb-4">No test scores added yet</p>
+            )}
 
-              {showTestDropdown && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-80 overflow-y-auto">
-                  <div className="p-2 border-b">
-                    <input
-                      type="text"
-                      value={testSearch}
-                      onChange={(e) => setTestSearch(e.target.value)}
-                      placeholder="Search tests..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                      autoFocus
-                    />
+            {/* Add test button */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowTestDropdown(true)}
+              className="w-full justify-center"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Test Score
+            </Button>
+
+            {/* Modal for adding test */}
+            {showTestDropdown && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+                  <div className="p-4 border-b flex items-center justify-between">
+                    <h3 className="font-semibold">Add Test Score</h3>
+                    <button
+                      onClick={() => {
+                        setShowTestDropdown(false)
+                        setSelectedTest(null)
+                        setTestSearch('')
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
-                  {Object.entries(filteredTests).map(([category, tests]) => (
-                    <div key={category}>
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
-                        {category}
+
+                  {!selectedTest ? (
+                    <>
+                      <div className="p-4 border-b">
+                        <input
+                          type="text"
+                          value={testSearch}
+                          onChange={(e) => setTestSearch(e.target.value)}
+                          placeholder="Search tests..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          autoFocus
+                        />
                       </div>
-                      {tests.map((test: any) => (
-                        <button
-                          key={test.id}
-                          onClick={() => addTestScore(test)}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-600"
+                      <div className="overflow-y-auto max-h-80">
+                        {Object.entries(filteredTests).map(([category, tests]) => (
+                          <div key={category}>
+                            <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0">
+                              {category}
+                            </div>
+                            {tests.map((test: any) => (
+                              <button
+                                key={test.id}
+                                onClick={() => selectTestForAdding(test)}
+                                className="w-full text-left px-4 py-3 text-sm hover:bg-blue-50 hover:text-blue-600 border-b border-gray-100"
+                              >
+                                <span className="font-medium">{test.name}</span>
+                                <span className="text-gray-400 ml-2 text-xs">
+                                  {test.type === 'select' ? test.options?.join(', ') : `${test.min}-${test.max}`}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        ))}
+                        {Object.keys(filteredTests).length === 0 && (
+                          <div className="p-6 text-center text-gray-500 text-sm">
+                            No tests found
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-6">
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium mb-2">{selectedTest.name}</label>
+                        {selectedTest.type === 'select' ? (
+                          <select
+                            value={tempTestValue}
+                            onChange={(e) => setTempTestValue(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                            autoFocus
+                          >
+                            <option value="">Select grade</option>
+                            {selectedTest.options?.map((opt: string) => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        ) : selectedTest.type === 'text' ? (
+                          <input
+                            type="text"
+                            value={tempTestValue}
+                            onChange={(e) => setTempTestValue(e.target.value)}
+                            placeholder={selectedTest.placeholder}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                            autoFocus
+                          />
+                        ) : (
+                          <input
+                            type="number"
+                            value={tempTestValue}
+                            onChange={(e) => setTempTestValue(e.target.value)}
+                            placeholder={`Enter score (${selectedTest.min}-${selectedTest.max})`}
+                            min={selectedTest.min}
+                            max={selectedTest.max}
+                            step={selectedTest.step || 1}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                            autoFocus
+                          />
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          Valid range: {selectedTest.type === 'select' ? selectedTest.options?.join(', ') : `${selectedTest.min} - ${selectedTest.max}`}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={cancelAddTest}
+                          className="flex-1"
                         >
-                          {test.name}
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                  {Object.keys(filteredTests).length === 0 && (
-                    <div className="p-4 text-center text-gray-500 text-sm">
-                      No tests found
+                          Back
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={confirmAddTest}
+                          disabled={!tempTestValue}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          Add Score
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>
