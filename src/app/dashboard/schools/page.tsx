@@ -1,62 +1,125 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink } from 'lucide-react'
+import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Globe, ChevronDown, ChevronUp, Search, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
-const mockSchools = [
-  {
-    id: 1,
-    name: 'University of Edinburgh',
-    location: 'Edinburgh, UK',
-    tuition: '$28,000/year',
-    acceptance: '43%',
-    match: 94,
-    programs: ['Computer Science', 'Data Science', 'AI'],
-    image: 'https://images.unsplash.com/photo-1583531172067-5f7886a57c19?w=400'
-  },
-  {
-    id: 2,
-    name: 'University of Amsterdam',
-    location: 'Amsterdam, Netherlands',
-    tuition: '$15,000/year',
-    acceptance: '38%',
-    match: 89,
-    programs: ['Computer Science', 'Information Systems'],
-    image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=400'
-  },
-  {
-    id: 3,
-    name: 'Technical University of Munich',
-    location: 'Munich, Germany',
-    tuition: '$500/year',
-    acceptance: '25%',
-    match: 85,
-    programs: ['Informatics', 'Data Engineering'],
-    image: 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?w=400'
-  },
-  {
-    id: 4,
-    name: 'KTH Royal Institute',
-    location: 'Stockholm, Sweden',
-    tuition: '$18,000/year',
-    acceptance: '35%',
-    match: 82,
-    programs: ['Computer Science', 'Machine Learning'],
-    image: 'https://images.unsplash.com/photo-1509356843151-3e7d96241e11?w=400'
-  }
-]
-
 export default function SchoolsPage() {
-  const [schools] = useState(mockSchools)
-  const [loading, setLoading] = useState(true)
+  const [schools, setSchools] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [showForm, setShowForm] = useState(true)
+  const [expandedSections, setExpandedSections] = useState({
+    profile: true,
+    grades: false,
+    tests: false,
+    preferences: false
+  })
 
-  useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => setLoading(false), 1500)
-    return () => clearTimeout(timer)
-  }, [])
+  // Form state
+  const [formData, setFormData] = useState({
+    // Profile
+    education_level: 'High School',
+    country_origin: '',
+    interests: '',
+
+    // Grades
+    gpa: '',
+    gpa_scale: '4.0',
+    bacalaureat: '',
+    abitur: '',
+    a_levels: '',
+    ib_score: '',
+
+    // English tests
+    ielts: '',
+    toefl: '',
+    duolingo: '',
+
+    // Standardized tests
+    sat: '',
+    act: '',
+
+    // Preferences
+    budget_min: 0,
+    budget_max: 50000,
+    preferred_countries: '',
+    degree_type: 'Bachelor',
+    scholarship_needed: false,
+    language_of_instruction: 'English'
+  })
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section as keyof typeof prev]
+    }))
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }))
+  }
+
+  const handleSearch = async () => {
+    setLoading(true)
+    setShowForm(false)
+
+    try {
+      const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
+
+      const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_name: user.name || 'Student',
+          education_level: formData.education_level,
+          country_origin: formData.country_origin,
+          interests: formData.interests || user.goal || '',
+
+          gpa: formData.gpa,
+          gpa_scale: formData.gpa_scale,
+          bacalaureat: formData.bacalaureat,
+          abitur: formData.abitur,
+          a_levels: formData.a_levels,
+          ib_score: formData.ib_score,
+
+          ielts: formData.ielts,
+          toefl: formData.toefl,
+          duolingo: formData.duolingo,
+
+          sat: formData.sat,
+          act: formData.act,
+
+          budget_min: formData.budget_min,
+          budget_max: formData.budget_max,
+          preferred_countries: formData.preferred_countries,
+          degree_type: formData.degree_type,
+          scholarship_needed: formData.scholarship_needed,
+          language_of_instruction: formData.language_of_instruction
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.universities) {
+        setSchools(data.universities)
+      } else if (data.universities) {
+        setSchools(data.universities)
+      } else {
+        throw new Error('Failed to find universities')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to find universities. Please try again.')
+      setShowForm(true)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -67,66 +130,401 @@ export default function SchoolsPage() {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">School Matches</h1>
-          <p className="text-gray-600">Universities that match your profile and goals</p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Search className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Find Your Perfect University</h1>
+              <p className="text-gray-600">AI-powered matching based on your profile</p>
+            </div>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
-                <div className="h-40 bg-gray-200 rounded-xl mb-4" />
-                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-                <div className="h-4 bg-gray-200 rounded w-1/2" />
-              </div>
-            ))}
+        {showForm ? (
+          <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+            {/* Profile Section */}
+            <div className="mb-4">
+              <button
+                onClick={() => toggleSection('profile')}
+                className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <GraduationCap className="w-5 h-5 text-blue-600" />
+                  <span className="font-semibold">Your Profile</span>
+                </div>
+                {expandedSections.profile ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+
+              {expandedSections.profile && (
+                <div className="p-4 space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Education Level</label>
+                      <select
+                        name="education_level"
+                        value={formData.education_level}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      >
+                        <option>High School</option>
+                        <option>Bachelor&apos;s Degree</option>
+                        <option>Master&apos;s Degree</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Country of Origin</label>
+                      <input
+                        type="text"
+                        name="country_origin"
+                        value={formData.country_origin}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Romania, Germany"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Field of Interest</label>
+                    <input
+                      type="text"
+                      name="interests"
+                      value={formData.interests}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Computer Science, Medicine, Business"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Grades Section */}
+            <div className="mb-4">
+              <button
+                onClick={() => toggleSection('grades')}
+                className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  <span className="font-semibold">Academic Scores</span>
+                  <span className="text-xs text-gray-500">(Optional)</span>
+                </div>
+                {expandedSections.grades ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+
+              {expandedSections.grades && (
+                <div className="p-4 space-y-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">GPA</label>
+                      <input
+                        type="text"
+                        name="gpa"
+                        value={formData.gpa}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 3.8"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Bacalaureat</label>
+                      <input
+                        type="text"
+                        name="bacalaureat"
+                        value={formData.bacalaureat}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 9.5"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">IB Score</label>
+                      <input
+                        type="text"
+                        name="ib_score"
+                        value={formData.ib_score}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 38"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">A-Levels</label>
+                      <input
+                        type="text"
+                        name="a_levels"
+                        value={formData.a_levels}
+                        onChange={handleInputChange}
+                        placeholder="e.g. AAA"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Abitur</label>
+                      <input
+                        type="text"
+                        name="abitur"
+                        value={formData.abitur}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 1.3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Tests Section */}
+            <div className="mb-4">
+              <button
+                onClick={() => toggleSection('tests')}
+                className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-green-600" />
+                  <span className="font-semibold">Test Scores</span>
+                  <span className="text-xs text-gray-500">(Optional)</span>
+                </div>
+                {expandedSections.tests ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+
+              {expandedSections.tests && (
+                <div className="p-4 space-y-4">
+                  <p className="text-sm text-gray-600 mb-2">English Proficiency</p>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">IELTS</label>
+                      <input
+                        type="text"
+                        name="ielts"
+                        value={formData.ielts}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 7.5"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">TOEFL</label>
+                      <input
+                        type="text"
+                        name="toefl"
+                        value={formData.toefl}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 100"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Duolingo</label>
+                      <input
+                        type="text"
+                        name="duolingo"
+                        value={formData.duolingo}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 120"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2 mt-4">Standardized Tests</p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">SAT</label>
+                      <input
+                        type="text"
+                        name="sat"
+                        value={formData.sat}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 1450"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">ACT</label>
+                      <input
+                        type="text"
+                        name="act"
+                        value={formData.act}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 32"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Preferences Section */}
+            <div className="mb-6">
+              <button
+                onClick={() => toggleSection('preferences')}
+                className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-orange-600" />
+                  <span className="font-semibold">Preferences</span>
+                </div>
+                {expandedSections.preferences ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+
+              {expandedSections.preferences && (
+                <div className="p-4 space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Preferred Countries</label>
+                      <input
+                        type="text"
+                        name="preferred_countries"
+                        value={formData.preferred_countries}
+                        onChange={handleInputChange}
+                        placeholder="e.g. UK, Netherlands, Germany"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Degree Type</label>
+                      <select
+                        name="degree_type"
+                        value={formData.degree_type}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      >
+                        <option>Bachelor</option>
+                        <option>Master</option>
+                        <option>PhD</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Budget Range: ${formData.budget_min.toLocaleString()} - ${formData.budget_max.toLocaleString()}/year
+                    </label>
+                    <input
+                      type="range"
+                      name="budget_max"
+                      min="0"
+                      max="100000"
+                      step="5000"
+                      value={formData.budget_max}
+                      onChange={handleInputChange}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="scholarship_needed"
+                      checked={formData.scholarship_needed}
+                      onChange={handleInputChange}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <label className="text-sm">I need scholarship/financial aid</label>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={handleSearch}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg"
+            >
+              <Search className="w-5 h-5 mr-2" />
+              Find My Universities
+            </Button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            {schools.map((school) => (
-              <div key={school.id} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
-                <div
-                  className="h-40 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${school.image})` }}
-                />
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-xl font-bold">{school.name}</h3>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                      {school.match}% Match
-                    </span>
-                  </div>
+          <>
+            <Button
+              onClick={() => setShowForm(true)}
+              variant="outline"
+              className="mb-6"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Modify Search
+            </Button>
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <MapPin className="w-4 h-4" />
-                      {school.location}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <DollarSign className="w-4 h-4" />
-                      {school.tuition}
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <Users className="w-4 h-4" />
-                      {school.acceptance} acceptance rate
-                    </div>
+            {loading ? (
+              <div className="grid md:grid-cols-2 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
+                    <div className="h-40 bg-gray-200 rounded-xl mb-4" />
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-gray-200 rounded w-1/2" />
                   </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {school.programs.map((program) => (
-                      <span key={program} className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">
-                        {program}
-                      </span>
-                    ))}
-                  </div>
-
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    View Details <ExternalLink className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            ) : schools.length > 0 ? (
+              <div className="grid md:grid-cols-2 gap-6">
+                {schools.map((school, index) => (
+                  <div key={index} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                    <div className="h-3 bg-gradient-to-r from-blue-500 to-purple-600" />
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-xl font-bold">{school.name}</h3>
+                        {school.match_score && (
+                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                            {school.match_score}% Match
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 mb-4">
+                        {school.location && (
+                          <div className="flex items-center gap-2 text-gray-600 text-sm">
+                            <MapPin className="w-4 h-4" />
+                            {school.location}
+                          </div>
+                        )}
+                        {school.tuition && (
+                          <div className="flex items-center gap-2 text-gray-600 text-sm">
+                            <DollarSign className="w-4 h-4" />
+                            {school.tuition}
+                          </div>
+                        )}
+                        {school.acceptance_rate && (
+                          <div className="flex items-center gap-2 text-gray-600 text-sm">
+                            <Users className="w-4 h-4" />
+                            {school.acceptance_rate} acceptance rate
+                          </div>
+                        )}
+                      </div>
+
+                      {school.programs && school.programs.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {school.programs.slice(0, 3).map((program: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">
+                              {program}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {school.why_good_fit && (
+                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{school.why_good_fit}</p>
+                      )}
+
+                      {school.website && (
+                        <a href={school.website} target="_blank" rel="noopener noreferrer">
+                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                            Visit Website <ExternalLink className="w-4 h-4 ml-2" />
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-600">No universities found. Try adjusting your search criteria.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
