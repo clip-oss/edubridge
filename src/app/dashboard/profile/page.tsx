@@ -150,18 +150,26 @@ export default function ProfilePage() {
     const file = e.target.files?.[0]
     if (!file || !user) return
 
+    console.log('📸 Starting photo upload...', { fileName: file.name, fileSize: file.size })
     setUploadingPhoto(true)
     const fileExt = file.name.split('.').pop()
     const filePath = `${user.id}/avatar.${fileExt}`
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError, data: uploadData } = await supabase.storage
       .from('avatars')
       .upload(filePath, file, { upsert: true })
 
-    if (!uploadError) {
-      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
-      setProfile(prev => ({ ...prev, avatar_url: data.publicUrl }))
+    if (uploadError) {
+      console.error('❌ Photo upload error:', uploadError)
+      alert(`Failed to upload photo: ${uploadError.message}`)
+      setUploadingPhoto(false)
+      return
     }
+
+    console.log('✅ Photo uploaded successfully:', uploadData)
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
+    console.log('📎 Public URL:', data.publicUrl)
+    setProfile(prev => ({ ...prev, avatar_url: data.publicUrl }))
     setUploadingPhoto(false)
   }
 
@@ -218,21 +226,55 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    if (!user) return
+    if (!user) {
+      console.error('❌ No user found, cannot save')
+      return
+    }
+
     setSaving(true)
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        ...profile,
-        updated_at: new Date().toISOString()
-      })
-
-    if (!error) {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
+    const profileData = {
+      id: user.id,
+      full_name: profile.full_name,
+      phone: profile.phone,
+      country_origin: profile.country_origin,
+      date_of_birth: profile.date_of_birth,
+      avatar_url: profile.avatar_url,
+      education_level: profile.education_level,
+      school_name: profile.school_name,
+      grading_system: profile.grading_system,
+      grade_value: profile.grade_value,
+      graduation_year: profile.graduation_year,
+      test_scores: profile.test_scores,
+      degree_type: profile.degree_type,
+      fields_of_interest: profile.fields_of_interest,
+      preferred_countries: profile.preferred_countries,
+      budget_min: profile.budget_min,
+      budget_max: profile.budget_max,
+      need_scholarship: profile.need_scholarship,
+      target_start_year: profile.target_start_year,
+      cv_url: profile.cv_url,
+      cv_filename: profile.cv_filename,
+      updated_at: new Date().toISOString()
     }
+
+    console.log('💾 Saving profile data:', profileData)
+
+    const { error, data } = await supabase
+      .from('profiles')
+      .upsert(profileData)
+      .select()
+
+    if (error) {
+      console.error('❌ Save error:', error)
+      alert(`Failed to save profile: ${error.message}`)
+      setSaving(false)
+      return
+    }
+
+    console.log('✅ Profile saved successfully:', data)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
     setSaving(false)
   }
 
