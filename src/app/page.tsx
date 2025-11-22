@@ -350,37 +350,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Student Success */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#374151] mb-4">
-              Where Our Students Are Now 🌍
-            </h2>
-            <p className="text-gray-500 mb-12">200+ acceptances in 2024 alone</p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['Oxford', 'MIT', 'TU Munich', 'ETH Zurich', 'Cambridge', 'Stanford', 'Imperial', 'Sorbonne'].map((uni, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-gray-50 rounded-xl p-4 text-sm font-medium text-gray-500"
-              >
-                {uni}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Pricing */}
       <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#fffbf5]">
         <div className="max-w-6xl mx-auto">
