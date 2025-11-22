@@ -71,12 +71,50 @@ export default function SchoolsPage() {
     language_of_instruction: 'English'
   })
 
-  // Load profile data on mount
+  // Load profile data on mount and check for persisted search state
   useEffect(() => {
     console.log('=== COMPONENT MOUNTED ===')
+
+    // Check for saved results from previous mount
+    const savedResults = sessionStorage.getItem('edubridge_results')
+    if (savedResults) {
+      console.log('Found saved results, restoring...')
+      try {
+        const results = JSON.parse(savedResults)
+        setSchools(results)
+        sessionStorage.removeItem('edubridge_results')
+        setProfileLoading(false)
+        return
+      } catch (e) {
+        console.error('Error parsing saved results:', e)
+        sessionStorage.removeItem('edubridge_results')
+      }
+    }
+
+    // Check if search was in progress
+    const isSearching = sessionStorage.getItem('edubridge_searching')
+    if (isSearching) {
+      console.log('Search was in progress, component remounted - showing loading')
+      setLoading(true)
+      setProfileLoading(false)
+      // The fetch is still running in the background, we just need to wait
+      // But since we remounted, the fetch was cancelled. Need to restart.
+      const savedFormData = sessionStorage.getItem('edubridge_search_data')
+      if (savedFormData) {
+        setFormData(JSON.parse(savedFormData))
+      }
+      sessionStorage.removeItem('edubridge_searching')
+      sessionStorage.removeItem('edubridge_search_data')
+      // Don't auto-restart - let user click again
+      setLoading(false)
+      setShowSummary(true)
+      setError('Search was interrupted. Please try again.')
+      return
+    }
+
     loadProfileData()
     return () => {
-      console.log('=== COMPONENT UNMOUNTED - THIS IS THE PROBLEM! ===')
+      console.log('=== COMPONENT UNMOUNTED ===')
     }
   }, [])
 
@@ -239,6 +277,9 @@ export default function SchoolsPage() {
     setError(null)
     isSearchingRef.current = false
     abortControllerRef.current = null
+    // Clear sessionStorage
+    sessionStorage.removeItem('edubridge_searching')
+    sessionStorage.removeItem('edubridge_search_data')
   }
 
   const toggleSection = (section: string) => {
@@ -280,6 +321,11 @@ export default function SchoolsPage() {
     setShowSummary(false)
     setError(null)
     setLoadingProgress(0)
+
+    // Save search state to sessionStorage in case of remount
+    sessionStorage.setItem('edubridge_searching', 'true')
+    sessionStorage.setItem('edubridge_search_data', JSON.stringify(formData))
+    console.log('Saved search state to sessionStorage')
 
     // Create new abort controller with 3 minute timeout
     abortControllerRef.current = new AbortController()
@@ -355,10 +401,20 @@ export default function SchoolsPage() {
       setSchools(universities)
       console.log('6. SET SCHOOLS DONE')
 
+      // Save results and clear searching flag
+      sessionStorage.setItem('edubridge_results', JSON.stringify(universities))
+      sessionStorage.removeItem('edubridge_searching')
+      sessionStorage.removeItem('edubridge_search_data')
+      console.log('Saved results to sessionStorage')
+
     } catch (error: any) {
       clearTimeout(timeoutId)
       console.error('FETCH ERROR:', error.name, error.message)
       console.error('FULL ERROR:', error)
+
+      // Clear searching flag on error
+      sessionStorage.removeItem('edubridge_searching')
+      sessionStorage.removeItem('edubridge_search_data')
 
       if (error.name === 'AbortError') {
         console.log('Request was aborted (user cancel or timeout)')
