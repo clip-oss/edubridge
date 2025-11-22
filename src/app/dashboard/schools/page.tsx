@@ -31,7 +31,6 @@ export default function SchoolsPage() {
   const [loadedFromProfile, setLoadedFromProfile] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
   const isSearchingRef = useRef(false)
-  const supabase = createClient()
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
     grades: false,
@@ -81,6 +80,7 @@ export default function SchoolsPage() {
     setProfileLoading(true)
 
     try {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
@@ -430,7 +430,7 @@ export default function SchoolsPage() {
                 )}
                 <div className="flex justify-between py-2 border-b border-gray-100">
                   <span className="text-gray-500">Budget</span>
-                  <span className="font-medium">Up to ${formData.budget_max.toLocaleString()}/year</span>
+                  <span className="font-medium">Up to ${(formData.budget_max || 50000).toLocaleString()}/year</span>
                 </div>
                 {(formData.gpa || formData.bacalaureat || formData.ib_score) && (
                   <div className="flex justify-between py-2 border-b border-gray-100">
@@ -734,7 +734,7 @@ export default function SchoolsPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Budget Range: ${formData.budget_min.toLocaleString()} - ${formData.budget_max.toLocaleString()}/year
+                      Budget Range: ${(formData.budget_min || 0).toLocaleString()} - ${(formData.budget_max || 50000).toLocaleString()}/year
                     </label>
                     <input
                       type="range"
