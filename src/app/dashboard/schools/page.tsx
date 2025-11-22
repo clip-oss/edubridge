@@ -1,36 +1,26 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+
+// GLOBAL LOCK - prevents any duplicate calls
+let globalSearchLock = false
 
 export default function UniversityFinder() {
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [error, setError] = useState('')
-  const hasSearched = useRef(false)
-
-  // Check for saved results on mount
-  useEffect(() => {
-    const saved = sessionStorage.getItem('university_results')
-    if (saved) {
-      try {
-        setResults(JSON.parse(saved))
-      } catch (e) {
-        sessionStorage.removeItem('university_results')
-      }
-    }
-  }, [])
 
   const handleSearch = async () => {
-    // Block if already searching
-    if (hasSearched.current || isLoading) {
-      console.log('Search blocked - already in progress')
+    // GLOBAL LOCK - Block if already searching
+    if (globalSearchLock) {
+      console.log('GLOBAL LOCK - BLOCKED')
       return
     }
+    globalSearchLock = true
 
-    hasSearched.current = true
     setIsLoading(true)
     setError('')
 
@@ -112,7 +102,7 @@ export default function UniversityFinder() {
       setError(err.message || 'Search failed')
     } finally {
       setIsLoading(false)
-      hasSearched.current = false
+      globalSearchLock = false
       console.log('=== SEARCH COMPLETED ===')
     }
   }
