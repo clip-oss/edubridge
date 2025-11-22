@@ -246,19 +246,31 @@ export default function SchoolsPage() {
 
   const handleSearch = async () => {
     // Prevent double API calls
-    if (isSearchingRef.current || loading) {
-      console.log('Search already in progress, ignoring click')
+    if (isSearchingRef.current) {
+      console.log('BLOCKED: Search already in progress, ignoring duplicate call')
       return
     }
 
+    if (loading) {
+      console.log('BLOCKED: Loading state is true, ignoring call')
+      return
+    }
+
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      console.log('Aborting previous request')
+      abortControllerRef.current.abort()
+    }
+
+    // Set ref immediately before any async operations
     isSearchingRef.current = true
+    console.log('=== API CALLED ===', new Date().toISOString())
+
     setLoading(true)
     setShowForm(false)
     setShowSummary(false)
     setError(null)
     setLoadingProgress(0)
-
-    console.log('Starting university search...', new Date().toISOString())
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController()
@@ -266,6 +278,7 @@ export default function SchoolsPage() {
     try {
       const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
 
+      console.log('Fetching universities from webhook...')
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -763,6 +776,7 @@ export default function SchoolsPage() {
 
             <Button
               onClick={handleSearch}
+              disabled={loading}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg"
             >
               <Search className="w-5 h-5 mr-2" />
