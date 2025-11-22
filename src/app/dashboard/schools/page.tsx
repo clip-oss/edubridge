@@ -31,6 +31,7 @@ export default function SchoolsPage() {
   const [loadedFromProfile, setLoadedFromProfile] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
   const isSearchingRef = useRef(false)
+  const searchIdRef = useRef(0)
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
     grades: false,
@@ -258,7 +259,8 @@ export default function SchoolsPage() {
 
     // Set ref FIRST, before anything else
     isSearchingRef.current = true
-    console.log('=== API CALLED ===', new Date().toISOString())
+    const currentSearchId = ++searchIdRef.current
+    console.log('=== API CALLED ===', new Date().toISOString(), 'Search ID:', currentSearchId)
 
     setLoading(true)
     setShowForm(false)
@@ -266,9 +268,13 @@ export default function SchoolsPage() {
     setError(null)
     setLoadingProgress(0)
 
-    // Create abort controller for this request
+    // Create abort controller with 3 minute timeout
     abortControllerRef.current = new AbortController()
     const currentController = abortControllerRef.current
+    const timeoutId = setTimeout(() => {
+      console.log('Request timeout after 3 minutes')
+      currentController.abort()
+    }, 180000) // 3 minute timeout
 
     try {
       const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
@@ -308,7 +314,15 @@ export default function SchoolsPage() {
       })
 
       const data = await response.json()
+      clearTimeout(timeoutId)
       console.log('API Response received:', data)
+
+      // Check if this is a stale response
+      if (currentSearchId !== searchIdRef.current) {
+        console.log('Stale response ignored, search ID mismatch:', currentSearchId, '!==', searchIdRef.current)
+        return
+      }
+
       setLoadingProgress(100)
 
       // Handle array response with result.universities
@@ -328,20 +342,33 @@ export default function SchoolsPage() {
       setSchools(universities)
       console.log('Schools state updated')
     } catch (error: any) {
+      clearTimeout(timeoutId)
+
       if (error.name === 'AbortError') {
-        // User cancelled - don't show error
-        console.log('Request was cancelled by user')
+        // User cancelled or timeout
+        console.log('Request was cancelled or timed out')
+        if (currentSearchId === searchIdRef.current) {
+          setError('Search timed out. Please try again.')
+          setShowSummary(true)
+        }
         return
       }
       console.error('Error:', error)
-      setError('Failed to find universities. Please try again.')
-      setShowSummary(true)
+      if (currentSearchId === searchIdRef.current) {
+        setError('Failed to find universities. Please try again.')
+        setShowSummary(true)
+      }
     } finally {
-      console.log('Finally block running, resetting state...')
-      setLoading(false)
-      isSearchingRef.current = false
-      abortControllerRef.current = null
-      console.log('=== Search completed ===', new Date().toISOString())
+      // Only reset state if this is still the current search
+      if (currentSearchId === searchIdRef.current) {
+        console.log('Finally block running, resetting state...')
+        setLoading(false)
+        isSearchingRef.current = false
+        abortControllerRef.current = null
+        console.log('=== Search completed ===', new Date().toISOString())
+      } else {
+        console.log('Skipping state reset for stale search:', currentSearchId)
+      }
     }
   }
 
