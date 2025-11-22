@@ -29,7 +29,6 @@ export default function SchoolsPage() {
   const [profileComplete, setProfileComplete] = useState(false)
   const [missingFields, setMissingFields] = useState<string[]>([])
   const [loadedFromProfile, setLoadedFromProfile] = useState(false)
-  const abortControllerRef = useRef<AbortController | null>(null)
   const isSearchingRef = useRef(false)
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
@@ -269,14 +268,10 @@ export default function SchoolsPage() {
 
   const cancelSearch = () => {
     console.log('=== USER CANCELLED SEARCH ===')
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
     setLoading(false)
     setShowSummary(true)
     setError(null)
     isSearchingRef.current = false
-    abortControllerRef.current = null
     // Clear sessionStorage
     sessionStorage.removeItem('edubridge_searching')
     sessionStorage.removeItem('edubridge_search_data')
@@ -298,23 +293,14 @@ export default function SchoolsPage() {
   }
 
   const handleSearch = async () => {
-    console.log('=== SEARCH FUNCTION CALLED ===', Date.now())
+    console.log('=== SEARCH FUNCTION CALLED ===')
 
-    // HARD LOCK - prevent ANY duplicate
+    // HARD BLOCK duplicate calls
     if (isSearchingRef.current) {
-      console.log('SEARCH LOCKED - IGNORING DUPLICATE')
+      console.log('Already fetching, blocked')
       return
     }
-
-    // Set lock IMMEDIATELY
     isSearchingRef.current = true
-    console.log('LOCK ACQUIRED')
-
-    // Cancel any existing request
-    if (abortControllerRef.current) {
-      console.log('Aborting previous request')
-      abortControllerRef.current.abort()
-    }
 
     setLoading(true)
     setShowForm(false)
@@ -322,120 +308,80 @@ export default function SchoolsPage() {
     setError(null)
     setLoadingProgress(0)
 
-    // Save search state to sessionStorage in case of remount
+    // Save search state to sessionStorage
     sessionStorage.setItem('edubridge_searching', 'true')
     sessionStorage.setItem('edubridge_search_data', JSON.stringify(formData))
-    console.log('Saved search state to sessionStorage')
 
-    // Create new abort controller with 3 minute timeout
-    abortControllerRef.current = new AbortController()
-    const timeoutId = setTimeout(() => {
-      console.log('Request timeout after 3 minutes')
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-    }, 180000)
+    const requestBody = {
+      user_name: 'Student',
+      education_level: formData.education_level,
+      country_origin: formData.country_origin,
+      interests: formData.interests,
+      gpa: formData.gpa,
+      gpa_scale: formData.gpa_scale,
+      bacalaureat: formData.bacalaureat,
+      abitur: formData.abitur,
+      a_levels: formData.a_levels,
+      ib_score: formData.ib_score,
+      ielts: formData.ielts,
+      toefl: formData.toefl,
+      duolingo: formData.duolingo,
+      sat: formData.sat,
+      act: formData.act,
+      budget_min: formData.budget_min,
+      budget_max: formData.budget_max,
+      preferred_countries: formData.preferred_countries,
+      degree_type: formData.degree_type,
+      scholarship_needed: formData.scholarship_needed,
+      language_of_instruction: formData.language_of_instruction
+    }
+
+    console.log('SENDING REQUEST:', requestBody)
 
     try {
-      const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
-
-      console.log('1. STARTING FETCH:', new Date().toISOString())
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: abortControllerRef.current.signal,
-        body: JSON.stringify({
-          user_name: user.name || 'Student',
-          education_level: formData.education_level,
-          country_origin: formData.country_origin,
-          interests: formData.interests || user.goal || '',
-
-          gpa: formData.gpa,
-          gpa_scale: formData.gpa_scale,
-          bacalaureat: formData.bacalaureat,
-          abitur: formData.abitur,
-          a_levels: formData.a_levels,
-          ib_score: formData.ib_score,
-
-          ielts: formData.ielts,
-          toefl: formData.toefl,
-          duolingo: formData.duolingo,
-
-          sat: formData.sat,
-          act: formData.act,
-
-          budget_min: formData.budget_min,
-          budget_max: formData.budget_max,
-          preferred_countries: formData.preferred_countries,
-          degree_type: formData.degree_type,
-          scholarship_needed: formData.scholarship_needed,
-          language_of_instruction: formData.language_of_instruction
-        })
+        body: JSON.stringify(requestBody)
       })
 
-      console.log('2. GOT RESPONSE:', response.status, new Date().toISOString())
+      console.log('RESPONSE STATUS:', response.status)
 
-      const text = await response.text()
-      console.log('3. RAW RESPONSE TEXT:', text.substring(0, 500))
+      const data = await response.json()
+      console.log('RESPONSE DATA:', data)
 
-      const data = JSON.parse(text)
-      console.log('4. PARSED DATA:', data)
-
-      clearTimeout(timeoutId)
       setLoadingProgress(100)
 
-      // Handle array response with result.universities
+      // Handle response - it's an array with one object
       let universities: any[] = []
       if (Array.isArray(data) && data[0]?.result?.universities) {
         universities = data[0].result.universities
-      } else if (data.result?.universities) {
+      } else if (data?.result?.universities) {
         universities = data.result.universities
-      } else if (data.universities) {
+      } else if (data?.universities) {
         universities = data.universities
       } else {
         console.error('Unexpected response format:', data)
-        throw new Error('Failed to find universities')
+        throw new Error('Invalid response format')
       }
 
-      console.log('5. FOUND UNIVERSITIES:', universities.length)
+      console.log('FOUND UNIVERSITIES:', universities.length)
       setSchools(universities)
-      console.log('6. SET SCHOOLS DONE')
 
-      // Save results and clear searching flag
+      // Save results to sessionStorage
       sessionStorage.setItem('edubridge_results', JSON.stringify(universities))
       sessionStorage.removeItem('edubridge_searching')
       sessionStorage.removeItem('edubridge_search_data')
-      console.log('Saved results to sessionStorage')
 
-    } catch (error: any) {
-      clearTimeout(timeoutId)
-      console.error('FETCH ERROR:', error.name, error.message)
-      console.error('FULL ERROR:', error)
-
-      // Clear searching flag on error
+    } catch (err: any) {
+      console.error('FETCH ERROR:', err)
       sessionStorage.removeItem('edubridge_searching')
       sessionStorage.removeItem('edubridge_search_data')
-
-      if (error.name === 'AbortError') {
-        console.log('Request was aborted (user cancel or timeout)')
-        // Don't set error here - cancelSearch handles user cancellation
-        // If it was timeout, the user is still on the page waiting
-        return
-      }
-
-      console.error('Search error:', error)
-      console.log('SETTING ERROR STATE - going back to summary')
-      setError('Failed to find universities. Please try again.')
+      setError(err.message || 'Search failed. Please try again.')
       setShowSummary(true)
-
     } finally {
-      // Only release lock if not already released by cancelSearch
-      if (isSearchingRef.current) {
-        console.log('=== RELEASING LOCK ===')
-        setLoading(false)
-        isSearchingRef.current = false
-        abortControllerRef.current = null
-      }
+      setLoading(false)
+      isSearchingRef.current = false
     }
   }
 
