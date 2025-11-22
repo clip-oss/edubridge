@@ -1,11 +1,6 @@
 'use client'
 
-// WINDOW LOCK - only initialize if it doesn't exist (don't reset!)
-if (typeof window !== 'undefined' && (window as any).__edubridge_search_lock__ === undefined) {
-  (window as any).__edubridge_search_lock__ = false
-}
-
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
@@ -14,24 +9,21 @@ export default function UniversityFinder() {
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [error, setError] = useState('')
-  const hasSearched = useRef(false)
 
   const handleSearch = async () => {
-    // WINDOW LOCK - strongest possible lock
-    if (typeof window !== 'undefined') {
-      if ((window as any).__edubridge_search_lock__) {
-        console.log('WINDOW LOCK - BLOCKED')
-        return
-      }
-      (window as any).__edubridge_search_lock__ = true
-    }
-
-    // REF LOCK - backup
-    if (hasSearched.current || isLoading) {
-      console.log('REF LOCK - BLOCKED')
+    // SESSION STORAGE LOCK - persists across HMR
+    const lockKey = 'edubridge_search_lock'
+    if (sessionStorage.getItem(lockKey) === 'true') {
+      console.log('SESSION LOCK - BLOCKED')
       return
     }
-    hasSearched.current = true
+    sessionStorage.setItem(lockKey, 'true')
+
+    if (isLoading) {
+      console.log('LOADING LOCK - BLOCKED')
+      sessionStorage.setItem(lockKey, 'false')
+      return
+    }
 
     setIsLoading(true)
     setError('')
@@ -145,10 +137,7 @@ export default function UniversityFinder() {
       setError(err.message || 'Search failed')
     } finally {
       setIsLoading(false)
-      hasSearched.current = false
-      if (typeof window !== 'undefined') {
-        (window as any).__edubridge_search_lock__ = false
-      }
+      sessionStorage.setItem('edubridge_search_lock', 'false')
       console.log('=== SEARCH COMPLETED ===')
     }
   }
