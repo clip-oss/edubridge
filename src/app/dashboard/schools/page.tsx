@@ -6,6 +6,9 @@ import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Glob
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
+// DEBUG: Global call counter to detect duplicate calls
+let globalCallCount = 0
+
 const loadingMessages = [
   { progress: 0, text: "Starting search...", tip: "Did you know? Students who apply to 5+ universities have 3x better acceptance rates." },
   { progress: 15, text: "Searching universities...", tip: "Tip: Early applications often have higher acceptance rates." },
@@ -293,11 +296,18 @@ export default function SchoolsPage() {
   }
 
   const handleSearch = async () => {
-    console.log('=== SEARCH FUNCTION CALLED ===')
+    globalCallCount++
+    console.log('=== SEARCH CALLED - COUNT:', globalCallCount, '===', new Date().toISOString())
+
+    // DEBUG: Detect duplicate
+    if (globalCallCount > 1) {
+      console.log('!!! DUPLICATE DETECTED - COUNT:', globalCallCount)
+      alert('DUPLICATE CALL DETECTED! Check console. Count: ' + globalCallCount)
+    }
 
     // HARD BLOCK duplicate calls
     if (isSearchingRef.current) {
-      console.log('Already fetching, blocked')
+      console.log('Already fetching, blocked by ref')
       return
     }
     isSearchingRef.current = true
