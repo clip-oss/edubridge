@@ -43,23 +43,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fffbf5]">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#fffbf5] border-r border-gray-100 transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="p-6">
           <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="w-8 h-8 text-blue-600" />
-            <span className="text-xl font-bold">EduBridge</span>
+            <span className="text-2xl font-bold text-[#374151]">EduBridge</span>
           </Link>
         </div>
 
@@ -71,28 +70,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-[#3b82f6]/10 text-[#3b82f6]'
+                    : 'text-[#374151] hover:bg-white hover:shadow-sm'
                 }`}
               >
-                <item.icon className="w-5 h-5" />
-                {item.label}
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-[#3b82f6]' : 'text-gray-400'}`} />
+                <span className="font-medium">{item.label}</span>
               </Link>
             )
           })}
         </nav>
+
+        {/* Sidebar footer */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-4 py-3 text-gray-500 hover:text-[#374151] hover:bg-white rounded-xl transition-all duration-200"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">Sign Out</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main content */}
       <div className="lg:ml-64">
         {/* Top header */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100">
           <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
+              className="lg:hidden p-2 text-[#374151] hover:bg-gray-50 rounded-xl"
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -103,13 +113,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100"
+                className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#a78bfa] flex items-center justify-center text-white font-medium text-sm">
                   {userName.charAt(0).toUpperCase()}
                 </div>
-                <span className="hidden sm:block text-sm font-medium">{userName}</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                <span className="hidden sm:block text-sm font-medium text-[#374151]">{userName}</span>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>
 
               {dropdownOpen && (
@@ -118,27 +128,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     className="fixed inset-0 z-40"
                     onClick={() => setDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
                     <Link
                       href="/dashboard/profile"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
                     >
-                      <User className="w-4 h-4" />
+                      <User className="w-4 h-4 text-gray-400" />
                       Profile
                     </Link>
                     <Link
                       href="/dashboard/settings"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-[#374151] hover:bg-gray-50 transition-colors"
                     >
-                      <Settings className="w-4 h-4" />
+                      <Settings className="w-4 h-4 text-gray-400" />
                       Settings
                     </Link>
-                    <hr className="my-1" />
+                    <hr className="my-2 border-gray-100" />
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 w-full transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out

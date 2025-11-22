@@ -329,19 +329,19 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Your Profile</h1>
-        <p className="text-gray-600">Complete your profile to get personalized recommendations</p>
+        <h1 className="text-3xl font-bold text-[#374151] mb-2">Your Profile</h1>
+        <p className="text-gray-500">Complete your profile to get personalized recommendations</p>
       </div>
 
       {/* Progress */}
-      <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+      <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-2">
-          <span className="font-medium">Profile Completion</span>
-          <span className="text-blue-600 font-bold">{calculateCompletion()}%</span>
+          <span className="font-medium text-[#374151]">Profile Completion</span>
+          <span className="text-[#3b82f6] font-bold">{calculateCompletion()}%</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-[#3b82f6] to-[#a78bfa] transition-all duration-500"
             style={{ width: `${calculateCompletion()}%` }}
           />
         </div>
@@ -897,7 +897,7 @@ export default function ProfilePage() {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8"
+          className="bg-[#ff8a65] hover:bg-[#f57c5b] text-white px-8 rounded-xl shadow-lg shadow-[#ff8a65]/25"
         >
           {saving ? (
             <>
