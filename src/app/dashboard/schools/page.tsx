@@ -1,25 +1,37 @@
 'use client'
 
+// WINDOW LOCK - strongest possible lock
+if (typeof window !== 'undefined') {
+  (window as any).__edubridge_search_lock__ = false
+}
+
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
-// GLOBAL LOCK - prevents any duplicate calls
-let globalSearchLock = false
-
 export default function UniversityFinder() {
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [error, setError] = useState('')
+  const hasSearched = useRef(false)
 
   const handleSearch = async () => {
-    // GLOBAL LOCK - Block if already searching
-    if (globalSearchLock) {
-      console.log('GLOBAL LOCK - BLOCKED')
+    // WINDOW LOCK - strongest possible lock
+    if (typeof window !== 'undefined') {
+      if ((window as any).__edubridge_search_lock__) {
+        console.log('WINDOW LOCK - BLOCKED')
+        return
+      }
+      (window as any).__edubridge_search_lock__ = true
+    }
+
+    // REF LOCK - backup
+    if (hasSearched.current || isLoading) {
+      console.log('REF LOCK - BLOCKED')
       return
     }
-    globalSearchLock = true
+    hasSearched.current = true
 
     setIsLoading(true)
     setError('')
@@ -83,14 +95,19 @@ export default function UniversityFinder() {
         body: JSON.stringify(requestBody)
       })
 
-      console.log('Response status:', response.status)
+      console.log('Response:', response.status, response.statusText)
 
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
         throw new Error(`HTTP error: ${response.status} ${response.statusText}`)
       }
 
-      const data = await response.json()
-      console.log('Data received:', data)
+      const text = await response.text()
+      console.log('Raw response:', text.substring(0, 200))
+
+      const data = JSON.parse(text)
+      console.log('Data parsed:', data)
 
       let universities: any[] = []
       if (Array.isArray(data) && data[0]?.result?.universities) {
@@ -110,7 +127,10 @@ export default function UniversityFinder() {
       setError(err.message || 'Search failed')
     } finally {
       setIsLoading(false)
-      globalSearchLock = false
+      hasSearched.current = false
+      if (typeof window !== 'undefined') {
+        (window as any).__edubridge_search_lock__ = false
+      }
       console.log('=== SEARCH COMPLETED ===')
     }
   }
