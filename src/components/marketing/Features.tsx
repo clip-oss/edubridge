@@ -6,78 +6,63 @@ import { Search, FileText, Globe, MessageCircle, BarChart3, Gift } from 'lucide-
 const features = [
   {
     icon: Search,
-    title: 'University Finder',
-    description: 'Find your perfect match in seconds with AI that analyzes 1000+ programs',
-    gradient: 'from-emerald-500 to-teal-500',
+    title: 'Smart Matching',
+    description: 'AI analyzes your profile to find perfect university matches from 1000+ programs',
   },
   {
     icon: FileText,
-    title: 'Essay Checker',
-    description: 'AI feedback that improves your essays and increases acceptance chances',
-    gradient: 'from-amber-500 to-orange-500',
+    title: 'Essay Feedback',
+    description: 'Get instant AI feedback to craft compelling application essays',
   },
   {
     icon: Globe,
-    title: 'Visa Navigator',
-    description: 'Step-by-step visa guidance for any destination country',
-    gradient: 'from-rose-500 to-pink-500',
+    title: 'Visa Guidance',
+    description: 'Step-by-step visa requirements and document checklists',
   },
   {
     icon: MessageCircle,
-    title: 'AI Chatbot',
-    description: '24/7 answers to any question about studying abroad',
-    gradient: 'from-purple-500 to-violet-500',
+    title: 'AI Assistant',
+    description: '24/7 answers to all your study abroad questions',
   },
   {
     icon: BarChart3,
-    title: 'Application Tracker',
-    description: 'Never miss a deadline with smart alerts and progress tracking',
-    gradient: 'from-blue-500 to-cyan-500',
+    title: 'Track Progress',
+    description: 'Never miss deadlines with smart reminders',
   },
   {
     icon: Gift,
-    title: 'Scholarship Finder',
+    title: 'Scholarships',
     description: 'Discover funding opportunities that match your profile',
-    gradient: 'from-teal-500 to-emerald-500',
   },
 ]
 
 export function Features() {
   return (
-    <section id="features" className="py-24 bg-zinc-900 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" className="py-32 bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold text-white mb-4"
-          >
-            Powerful Tools for Your{' '}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              Success
-            </span>
-          </motion.h2>
+        <div className="text-center mb-20">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-zinc-400 max-w-2xl mx-auto"
+            className="text-sm font-medium text-violet-600 mb-4"
           >
-            Everything you need to navigate your study abroad journey
+            FEATURES
           </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl md:text-5xl font-bold text-slate-900"
+          >
+            Everything you need
+          </motion.h2>
         </div>
 
         {/* Feature grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -85,22 +70,17 @@ export function Features() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="group"
+              className="group p-8 rounded-3xl bg-slate-50 hover:bg-slate-100 transition-colors"
             >
-              <div className="relative h-full bg-zinc-800/50 backdrop-blur-sm rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                {/* Icon */}
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <feature.icon className="w-6 h-6 text-white" />
-                </div>
-
-                {/* Content */}
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-zinc-400 text-sm leading-relaxed">
-                  {feature.description}
-                </p>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mb-6">
+                <feature.icon className="w-6 h-6 text-white" />
               </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">
+                {feature.title}
+              </h3>
+              <p className="text-slate-600 leading-relaxed">
+                {feature.description}
+              </p>
             </motion.div>
           ))}
         </div>
