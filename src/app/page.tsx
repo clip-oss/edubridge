@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -16,10 +16,18 @@ import {
   Minus,
   Sparkles
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 
 export default function Home() {
-  const [email, setEmail] = useState('')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user)
+    })
+  }, [])
 
   const universities = [
     'Oxford', 'MIT', 'TU Munich', 'ETH Zurich', 'Cambridge',
@@ -64,15 +72,26 @@ export default function Home() {
               <Link href="#pricing" className="text-gray-500 hover:text-[#374151] transition-colors">Pricing</Link>
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/auth/login" className="text-gray-500 hover:text-[#374151] transition-colors">
-                Log in
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="bg-[#3b82f6] text-white px-4 py-2 rounded-xl font-medium hover:bg-[#2563eb] transition-colors"
-              >
-                Get Started
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="bg-[#3b82f6] text-white px-4 py-2 rounded-xl font-medium hover:bg-[#2563eb] transition-colors"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="text-gray-500 hover:text-[#374151] transition-colors">
+                    Log in
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="bg-[#3b82f6] text-white px-4 py-2 rounded-xl font-medium hover:bg-[#2563eb] transition-colors"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -105,21 +124,16 @@ export default function Home() {
                   We help students from Moldova & Romania get accepted to top universities worldwide. For free.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="flex-1 px-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3b82f6]/50 focus:border-[#3b82f6] text-[#374151] bg-white"
-                  />
-                  <motion.button
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="bg-[#ff8a65] text-white px-6 py-4 rounded-xl font-semibold flex items-center justify-center gap-2 whitespace-nowrap shadow-lg shadow-[#ff8a65]/25"
-                  >
-                    Get Started - It's Free <Sparkles className="w-4 h-4" />
-                  </motion.button>
+                <div className="mb-4">
+                  <Link href="/auth/signup">
+                    <motion.button
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-[#ff8a65] text-white px-8 py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#ff8a65]/25 text-lg"
+                    >
+                      Get Started - It's Free <Sparkles className="w-5 h-5" />
+                    </motion.button>
+                  </Link>
                 </div>
 
                 <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-8">
@@ -587,19 +601,16 @@ export default function Home() {
               Join hundreds of students who turned their dreams into acceptance letters
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff8a65]/50 focus:border-[#ff8a65] text-[#374151] bg-white"
-              />
-              <motion.button
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-[#ff8a65] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-[#ff8a65]/25"
-              >
-                Let's Go!
-              </motion.button>
+            <div className="mb-4">
+              <Link href="/auth/signup">
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-[#ff8a65] text-white px-8 py-4 rounded-xl font-semibold shadow-lg shadow-[#ff8a65]/25 text-lg"
+                >
+                  Get Started - It's Free
+                </motion.button>
+              </Link>
             </div>
 
             <p className="text-sm text-gray-400">
