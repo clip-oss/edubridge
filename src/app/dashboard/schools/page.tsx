@@ -188,7 +188,7 @@ export default function SchoolsPage() {
     }
   }
 
-  // Progress animation effect
+  // Progress animation effect - calibrated for 2 minute search
   useEffect(() => {
     if (!loading) {
       setLoadingProgress(0)
@@ -196,13 +196,18 @@ export default function SchoolsPage() {
       return
     }
 
+    // Progress based on time - reaches 95% at 2 minutes (120 seconds)
     const progressInterval = setInterval(() => {
       setLoadingProgress(prev => {
         if (prev >= 95) return prev
-        const increment = Math.random() * 3 + 1
-        return Math.min(prev + increment, 95)
+        // Calculate progress based on elapsed time
+        // 95% over 120 seconds = ~0.79% per second
+        const targetProgress = (loadingTime / 120) * 95
+        // Smooth approach to target
+        const diff = targetProgress - prev
+        return Math.min(prev + Math.max(diff * 0.1, 0.5), 95)
       })
-    }, 500)
+    }, 1000)
 
     const timeInterval = setInterval(() => {
       setLoadingTime(prev => prev + 1)
@@ -212,7 +217,7 @@ export default function SchoolsPage() {
       clearInterval(progressInterval)
       clearInterval(timeInterval)
     }
-  }, [loading])
+  }, [loading, loadingTime])
 
   // Update loading message based on progress
   useEffect(() => {
@@ -824,11 +829,13 @@ export default function SchoolsPage() {
 
                   {/* Time Estimate */}
                   <p className="text-xs text-gray-400 mb-4">
-                    {loadingTime < 60
-                      ? 'This usually takes 1-2 minutes'
-                      : loadingTime < 180
-                        ? `Searching for ${Math.floor(loadingTime / 60)}:${(loadingTime % 60).toString().padStart(2, '0')}...`
-                        : 'Taking longer than expected. Please wait...'
+                    {loadingTime < 30
+                      ? 'This usually takes about 2 minutes'
+                      : loadingTime < 120
+                        ? `Searching for ${Math.floor(loadingTime / 60)}:${(loadingTime % 60).toString().padStart(2, '0')} / ~2:00`
+                        : loadingTime < 180
+                          ? `Almost done... ${Math.floor(loadingTime / 60)}:${(loadingTime % 60).toString().padStart(2, '0')}`
+                          : 'Taking longer than expected. Please wait...'
                     }
                   </p>
 
