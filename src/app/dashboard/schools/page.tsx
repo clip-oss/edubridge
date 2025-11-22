@@ -245,24 +245,13 @@ export default function SchoolsPage() {
   }
 
   const handleSearch = async () => {
-    // Prevent double API calls
-    if (isSearchingRef.current) {
+    // Prevent double API calls - check BOTH ref and state
+    if (isSearchingRef.current || loading) {
       console.log('BLOCKED: Search already in progress, ignoring duplicate call')
       return
     }
 
-    if (loading) {
-      console.log('BLOCKED: Loading state is true, ignoring call')
-      return
-    }
-
-    // Cancel any existing request
-    if (abortControllerRef.current) {
-      console.log('Aborting previous request')
-      abortControllerRef.current.abort()
-    }
-
-    // Set ref immediately before any async operations
+    // Set ref FIRST, before anything else
     isSearchingRef.current = true
     console.log('=== API CALLED ===', new Date().toISOString())
 
@@ -274,6 +263,7 @@ export default function SchoolsPage() {
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController()
+    const currentController = abortControllerRef.current
 
     try {
       const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
@@ -282,7 +272,7 @@ export default function SchoolsPage() {
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: abortControllerRef.current.signal,
+        signal: currentController.signal,
         body: JSON.stringify({
           user_name: user.name || 'Student',
           education_level: formData.education_level,
@@ -313,31 +303,40 @@ export default function SchoolsPage() {
       })
 
       const data = await response.json()
+      console.log('API Response received:', data)
       setLoadingProgress(100)
 
       // Handle array response with result.universities
+      let universities: any[] = []
       if (Array.isArray(data) && data[0]?.result?.universities) {
-        setSchools(data[0].result.universities)
+        universities = data[0].result.universities
       } else if (data.result?.universities) {
-        setSchools(data.result.universities)
+        universities = data.result.universities
       } else if (data.universities) {
-        setSchools(data.universities)
+        universities = data.universities
       } else {
+        console.error('Unexpected response format:', data)
         throw new Error('Failed to find universities')
       }
+
+      console.log(`Found ${universities.length} universities, setting state...`)
+      setSchools(universities)
+      console.log('Schools state updated')
     } catch (error: any) {
       if (error.name === 'AbortError') {
         // User cancelled - don't show error
+        console.log('Request was cancelled by user')
         return
       }
       console.error('Error:', error)
       setError('Failed to find universities. Please try again.')
       setShowSummary(true)
     } finally {
+      console.log('Finally block running, resetting state...')
       setLoading(false)
       isSearchingRef.current = false
       abortControllerRef.current = null
-      console.log('Search completed', new Date().toISOString())
+      console.log('=== Search completed ===', new Date().toISOString())
     }
   }
 
