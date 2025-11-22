@@ -75,14 +75,22 @@ export default function UniversityFinder() {
 
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        mode: 'cors',
         body: JSON.stringify(requestBody)
       })
 
       console.log('Response status:', response.status)
 
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status} ${response.statusText}`)
+      }
+
       const data = await response.json()
-      console.log('Got response:', data)
+      console.log('Data received:', data)
 
       let universities: any[] = []
       if (Array.isArray(data) && data[0]?.result?.universities) {
