@@ -227,12 +227,15 @@ export default function SchoolsPage() {
   }, [loadingProgress])
 
   const cancelSearch = () => {
+    console.log('=== USER CANCELLED SEARCH ===')
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
     setLoading(false)
-    setShowForm(true)
+    setShowSummary(true)
     setError(null)
+    isSearchingRef.current = false
+    abortControllerRef.current = null
   }
 
   const toggleSection = (section: string) => {
@@ -348,9 +351,9 @@ export default function SchoolsPage() {
       clearTimeout(timeoutId)
 
       if (error.name === 'AbortError') {
-        console.log('Request was aborted')
-        setError('Search was cancelled. Please try again.')
-        setShowSummary(true)
+        console.log('Request was aborted (user cancel or timeout)')
+        // Don't set error here - cancelSearch handles user cancellation
+        // If it was timeout, the user is still on the page waiting
         return
       }
 
@@ -359,10 +362,13 @@ export default function SchoolsPage() {
       setShowSummary(true)
 
     } finally {
-      console.log('=== RELEASING LOCK ===')
-      setLoading(false)
-      isSearchingRef.current = false
-      abortControllerRef.current = null
+      // Only release lock if not already released by cancelSearch
+      if (isSearchingRef.current) {
+        console.log('=== RELEASING LOCK ===')
+        setLoading(false)
+        isSearchingRef.current = false
+        abortControllerRef.current = null
+      }
     }
   }
 
