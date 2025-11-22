@@ -57,12 +57,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="p-6">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl font-bold text-[#374151]">EduBridge</span>
           </Link>
         </div>
 
         <nav className="px-4 space-y-1">
+          {/* Dashboard Home */}
+          <Link
+            href="/dashboard"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+              pathname === '/dashboard'
+                ? 'bg-[#3b82f6]/10 text-[#3b82f6]'
+                : 'text-[#374151] hover:bg-white hover:shadow-sm'
+            }`}
+          >
+            <svg className={`w-5 h-5 ${pathname === '/dashboard' ? 'text-[#3b82f6]' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Dashboard</span>
+          </Link>
           {navItems.map((item) => {
             const isActive = pathname === item.href
             return (

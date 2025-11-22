@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import {
   Lock, Mail, Trash2, Bell, Eye, Download, Crown,
-  ChevronRight, AlertTriangle, Check
+  ChevronRight, AlertTriangle, Check, ArrowLeft
 } from 'lucide-react'
+import Link from 'next/link'
 
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null)
@@ -158,8 +159,12 @@ export default function SettingsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Manage your account preferences and security</p>
+        <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#3b82f6] mb-4 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Dashboard
+        </Link>
+        <h1 className="text-2xl font-bold text-[#374151]">Settings</h1>
+        <p className="text-gray-500">Manage your account preferences and security</p>
       </div>
 
       {/* Account Settings */}

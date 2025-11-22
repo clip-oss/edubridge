@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import {
   User, GraduationCap, FileText, Target, Loader2, CheckCircle,
-  ChevronDown, ChevronUp, Plus, X, Upload, Camera, FolderOpen
+  ChevronDown, ChevronUp, Plus, X, Upload, Camera, FolderOpen, ArrowLeft
 } from 'lucide-react'
+import Link from 'next/link'
 
 const countries = [
   'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria', 'Bangladesh',
@@ -328,6 +329,10 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <Link href="/dashboard" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#3b82f6] mb-4 transition-colors">
+        <ArrowLeft className="w-4 h-4" />
+        Dashboard
+      </Link>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#374151] mb-2">Your Profile</h1>
         <p className="text-gray-500">Complete your profile to get personalized recommendations</p>
