@@ -1,7 +1,7 @@
 'use client'
 
-// WINDOW LOCK - strongest possible lock
-if (typeof window !== 'undefined') {
+// WINDOW LOCK - only initialize if it doesn't exist (don't reset!)
+if (typeof window !== 'undefined' && (window as any).__edubridge_search_lock__ === undefined) {
   (window as any).__edubridge_search_lock__ = false
 }
 
