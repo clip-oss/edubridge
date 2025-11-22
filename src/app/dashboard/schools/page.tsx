@@ -290,7 +290,7 @@ export default function SchoolsPage() {
     try {
       const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
 
-      console.log('=== FETCH STARTING ===', Date.now())
+      console.log('1. STARTING FETCH:', new Date().toISOString())
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -324,11 +324,15 @@ export default function SchoolsPage() {
         })
       })
 
-      const data = await response.json()
-      clearTimeout(timeoutId)
-      console.log('=== FETCH COMPLETE ===', Date.now())
-      console.log('API Response:', data)
+      console.log('2. GOT RESPONSE:', response.status, new Date().toISOString())
 
+      const text = await response.text()
+      console.log('3. RAW RESPONSE TEXT:', text.substring(0, 500))
+
+      const data = JSON.parse(text)
+      console.log('4. PARSED DATA:', data)
+
+      clearTimeout(timeoutId)
       setLoadingProgress(100)
 
       // Handle array response with result.universities
@@ -344,11 +348,14 @@ export default function SchoolsPage() {
         throw new Error('Failed to find universities')
       }
 
-      console.log(`Found ${universities.length} universities`)
+      console.log('5. FOUND UNIVERSITIES:', universities.length)
       setSchools(universities)
+      console.log('6. SET SCHOOLS DONE')
 
     } catch (error: any) {
       clearTimeout(timeoutId)
+      console.error('FETCH ERROR:', error.name, error.message)
+      console.error('FULL ERROR:', error)
 
       if (error.name === 'AbortError') {
         console.log('Request was aborted (user cancel or timeout)')
@@ -371,6 +378,8 @@ export default function SchoolsPage() {
       }
     }
   }
+
+  console.log('COMPONENT RENDER - loading:', loading, 'schools:', schools.length, 'showSummary:', showSummary)
 
   return (
     <div className="min-h-screen bg-gray-50">
