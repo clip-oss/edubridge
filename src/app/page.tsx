@@ -1,8 +1,10 @@
 import { Hero } from '@/components/marketing/Hero'
-import { TrustedBy } from '@/components/marketing/TrustedBy'
+import { LogoScroll } from '@/components/marketing/LogoScroll'
+import { ProblemSolution } from '@/components/marketing/ProblemSolution'
 import { Features } from '@/components/marketing/Features'
-import { HowItWorks } from '@/components/marketing/HowItWorks'
+import { Timeline } from '@/components/marketing/Timeline'
 import { Pricing } from '@/components/marketing/Pricing'
+import { FAQ } from '@/components/marketing/FAQ'
 import { CTASection } from '@/components/marketing/CTASection'
 import { Footer } from '@/components/marketing/Footer'
 import { Navbar } from '@/components/shared/Navbar'
@@ -12,10 +14,12 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <Navbar />
       <Hero />
-      <TrustedBy />
+      <LogoScroll />
+      <ProblemSolution />
       <Features />
-      <HowItWorks />
+      <Timeline />
       <Pricing />
+      <FAQ />
       <CTASection />
       <Footer />
     </div>

@@ -2,188 +2,145 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Play, Sparkles } from 'lucide-react'
+import { ArrowRight, GraduationCap, Plane, Building, Globe2 } from 'lucide-react'
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-blue-600">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
+    <section className="relative min-h-screen flex items-center overflow-hidden bg-zinc-900">
+      {/* Animated gradient mesh background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-emerald-900/40 via-zinc-900 to-zinc-900" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-amber-900/20 via-transparent to-transparent" />
 
-        {/* Floating blobs */}
+        {/* Animated blobs */}
         <motion.div
-          animate={{
-            y: [0, -20, 0],
-            scale: [1, 1.1, 1],
-          }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl"
         />
         <motion.div
-          animate={{
-            y: [0, 20, 0],
-            scale: [1, 0.9, 1],
-          }}
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-20 right-10 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            x: [0, 20, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-1/3 w-64 h-64 bg-purple-400/20 rounded-full blur-3xl"
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/20 rounded-full blur-3xl"
         />
 
-        {/* Decorative circles */}
-        <div className="absolute top-40 right-1/4 w-4 h-4 bg-orange-400 rounded-full opacity-60" />
-        <div className="absolute bottom-1/3 left-20 w-3 h-3 bg-cyan-400 rounded-full opacity-60" />
-        <div className="absolute top-1/4 right-20 w-2 h-2 bg-pink-400 rounded-full opacity-80" />
+        {/* Noise texture */}
+        <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4xNSIvPjwvc3ZnPg==')]" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left side - Content */}
-          <div className="text-center lg:text-left">
-            {/* Badge */}
+          <div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium mb-8"
+              transition={{ duration: 0.6 }}
             >
-              <Sparkles className="w-4 h-4 text-orange-400" />
-              AI-Powered Study Abroad Platform
-            </motion.div>
+              {/* Badge */}
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-6">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                AI-Powered Study Abroad Platform
+              </span>
 
-            {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white tracking-tight mb-6"
-            >
-              Turn Your Study Abroad{' '}
-              <span className="relative">
-                <span className="relative z-10">Dreams</span>
-                <span className="absolute bottom-2 left-0 w-full h-3 bg-orange-500/30 -z-0" />
-              </span>{' '}
-              Into Reality
-            </motion.h1>
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-6 leading-tight">
+                From Moldova to the{' '}
+                <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                  World's Best
+                </span>{' '}
+                Universities
+              </h1>
 
-            {/* Subheadline */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lg sm:text-xl text-white/80 mb-10 max-w-xl mx-auto lg:mx-0"
-            >
-              AI-powered platform helping students from Eastern Europe get accepted to top universities worldwide
-            </motion.p>
+              {/* Subheadline */}
+              <p className="text-lg text-zinc-400 mb-8 max-w-lg">
+                The AI platform that got 200+ Eastern European students into Oxford, MIT, and more
+              </p>
 
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
-            >
+              {/* Stats */}
+              <div className="flex flex-wrap gap-6 mb-8">
+                <div>
+                  <div className="text-2xl font-bold text-white">500+</div>
+                  <div className="text-sm text-zinc-500">Students</div>
+                </div>
+                <div className="w-px bg-zinc-700" />
+                <div>
+                  <div className="text-2xl font-bold text-white">50+</div>
+                  <div className="text-sm text-zinc-500">Countries</div>
+                </div>
+                <div className="w-px bg-zinc-700" />
+                <div>
+                  <div className="text-2xl font-bold text-white">95%</div>
+                  <div className="text-sm text-zinc-500">Success Rate</div>
+                </div>
+              </div>
+
+              {/* CTA */}
               <Link
                 href="/auth/signup"
-                className="group relative inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-semibold rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 hover:scale-105"
+                className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105"
               >
-                <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="relative">Start Your Journey — It's Free</span>
-                <ArrowRight className="relative w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Start Your Free Profile
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button className="inline-flex items-center gap-2 px-6 py-4 text-white font-medium hover:text-white/80 transition-colors">
-                <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-                  <Play className="w-4 h-4 ml-0.5" />
-                </span>
-                Watch Demo
-              </button>
             </motion.div>
           </div>
 
-          {/* Right side - Dashboard Preview */}
+          {/* Right side - 3D Illustration */}
           <motion.div
-            initial={{ opacity: 0, x: 50, rotateY: -10 }}
-            animate={{ opacity: 1, x: 0, rotateY: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             className="relative hidden lg:block"
           >
-            {/* Main dashboard mockup */}
-            <div className="relative transform perspective-1000 rotate-y-[-5deg] rotate-x-[5deg]">
-              <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-                {/* Browser bar */}
-                <div className="bg-gray-100 px-4 py-3 flex items-center gap-2 border-b">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                    <div className="w-3 h-3 rounded-full bg-green-400" />
-                  </div>
-                  <div className="flex-1 mx-4">
-                    <div className="bg-white rounded-md px-3 py-1.5 text-xs text-gray-500 text-center max-w-xs mx-auto">
-                      app.edubridge.io/dashboard
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dashboard content */}
-                <div className="p-6 bg-gray-50">
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                      <div className="text-2xl font-bold text-purple-600">12</div>
-                      <div className="text-xs text-gray-500">Matches</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                      <div className="text-2xl font-bold text-blue-600">3</div>
-                      <div className="text-xs text-gray-500">Essays</div>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-sm">
-                      <div className="text-2xl font-bold text-green-600">85%</div>
-                      <div className="text-xs text-gray-500">Complete</div>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <div className="h-2 w-20 bg-gray-200 rounded mb-2" />
-                    <div className="space-y-2">
-                      <div className="h-8 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg" />
-                      <div className="h-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg" />
-                    </div>
-                  </div>
+            <div className="relative w-full aspect-square">
+              {/* Central globe */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-64 h-64 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center">
+                  <Globe2 className="w-32 h-32 text-emerald-400/50" />
                 </div>
               </div>
 
-              {/* Glow effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-2xl -z-10 rounded-3xl" />
+              {/* Floating elements */}
+              <motion.div
+                animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-10 right-10 bg-white rounded-xl p-4 shadow-2xl"
+              >
+                <GraduationCap className="w-8 h-8 text-emerald-600" />
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute bottom-20 left-10 bg-white rounded-xl p-4 shadow-2xl"
+              >
+                <Plane className="w-8 h-8 text-amber-500" />
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-1/3 left-0 bg-white rounded-xl p-4 shadow-2xl"
+              >
+                <Building className="w-8 h-8 text-rose-500" />
+              </motion.div>
+
+              {/* Acceptance badge */}
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute bottom-10 right-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl px-4 py-3 shadow-2xl"
+              >
+                <div className="text-sm font-medium">Accepted! 🎉</div>
+                <div className="text-xs opacity-80">University of Oxford</div>
+              </motion.div>
+
+              {/* Glowing dots */}
+              <div className="absolute top-20 left-1/3 w-3 h-3 bg-amber-400 rounded-full animate-pulse" />
+              <div className="absolute bottom-1/3 right-20 w-2 h-2 bg-rose-400 rounded-full animate-pulse" />
+              <div className="absolute top-1/2 right-10 w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
             </div>
-
-            {/* Floating elements */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-6 -right-6 bg-white rounded-xl shadow-lg p-3 flex items-center gap-2"
-            >
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <span className="text-green-600 text-sm">✓</span>
-              </div>
-              <div>
-                <div className="text-xs font-semibold">Application Sent!</div>
-                <div className="text-xs text-gray-500">MIT</div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-4 -left-8 bg-white rounded-xl shadow-lg p-3"
-            >
-              <div className="text-xs font-semibold text-purple-600">Match Score</div>
-              <div className="text-lg font-bold">94%</div>
-            </motion.div>
           </motion.div>
         </div>
       </div>
