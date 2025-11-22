@@ -76,6 +76,8 @@ export default function SchoolsPage() {
   // Load profile data on mount and check for persisted search state
   useEffect(() => {
     console.log('=== COMPONENT MOUNTED ===')
+    // Reset global counter on mount
+    globalCallCount = 0
 
     // Check for saved results from previous mount
     const savedResults = sessionStorage.getItem('edubridge_results')
@@ -298,11 +300,14 @@ export default function SchoolsPage() {
   const handleSearch = async () => {
     globalCallCount++
     console.log('=== SEARCH CALLED - COUNT:', globalCallCount, '===', new Date().toISOString())
+    console.trace('Call stack for search #' + globalCallCount)
 
     // DEBUG: Detect duplicate
     if (globalCallCount > 1) {
       console.log('!!! DUPLICATE DETECTED - COUNT:', globalCallCount)
-      alert('DUPLICATE CALL DETECTED! Check console. Count: ' + globalCallCount)
+      console.trace('DUPLICATE CALL STACK')
+      alert('DUPLICATE CALL DETECTED! Check console for stack trace. Count: ' + globalCallCount)
+      return // Block the duplicate
     }
 
     // HARD BLOCK duplicate calls
