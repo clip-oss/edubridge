@@ -131,7 +131,7 @@ export default function Home() {
                       whileTap={{ scale: 0.98 }}
                       className="bg-[#ff8a65] text-white px-8 py-4 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-[#ff8a65]/25 text-lg"
                     >
-                      Get Started - It's Free <Sparkles className="w-5 h-5" />
+                      Start Free Now <Sparkles className="w-5 h-5" />
                     </motion.button>
                   </Link>
                 </div>
