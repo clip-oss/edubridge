@@ -85,17 +85,27 @@ export default function UniversityFinder() {
 
       console.log('Sending request:', requestBody)
 
-      const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        mode: 'cors',
-        body: JSON.stringify(requestBody)
-      })
+      // Set up 3-minute timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        console.log('Request timeout after 3 minutes')
+        controller.abort()
+      }, 180000) // 3 minutes
 
-      console.log('Response:', response.status, response.statusText)
+      try {
+        const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          mode: 'cors',
+          signal: controller.signal,
+          body: JSON.stringify(requestBody)
+        })
+
+        clearTimeout(timeoutId)
+        console.log('Response:', response.status, response.statusText)
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -121,6 +131,14 @@ export default function UniversityFinder() {
       console.log('Found universities:', universities.length)
       setResults(universities)
       sessionStorage.setItem('university_results', JSON.stringify(universities))
+
+      } catch (fetchErr: any) {
+        clearTimeout(timeoutId)
+        if (fetchErr.name === 'AbortError') {
+          throw new Error('Request timed out after 3 minutes')
+        }
+        throw fetchErr
+      }
 
     } catch (err: any) {
       console.error('Search error:', err)
