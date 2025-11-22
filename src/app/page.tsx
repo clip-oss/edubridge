@@ -365,13 +365,13 @@ export default function Home() {
             <p className="text-gray-500">Choose what works for you</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 items-start">
+          <div className="grid md:grid-cols-3 gap-8 items-stretch">
             {/* Free */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 border border-gray-200"
+              className="bg-white rounded-2xl p-8 border border-gray-200 flex flex-col"
             >
               <h3 className="text-xl font-semibold text-[#374151] mb-2">Free Forever</h3>
               <div className="mb-2">
@@ -397,7 +397,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-8 border-2 border-[#ff8a65] relative md:-mt-4 md:mb-4 shadow-lg"
+              className="bg-white rounded-2xl p-8 border-2 border-[#ff8a65] relative shadow-lg flex flex-col"
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ff8a65] text-white px-3 py-1 rounded-full text-xs font-medium">
                 Most Popular 💫
@@ -444,7 +444,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-8 border border-[#a78bfa]"
+              className="bg-white rounded-2xl p-8 border border-[#a78bfa] flex flex-col"
             >
               <h3 className="text-xl font-semibold text-[#374151] mb-2">Concierge</h3>
               <div className="mb-2">
