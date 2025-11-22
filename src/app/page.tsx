@@ -604,8 +604,8 @@ export default function Home() {
               <Link href="#" className="hover:text-[#374151] transition-colors">About</Link>
               <Link href="#" className="hover:text-[#374151] transition-colors">Blog</Link>
               <Link href="#" className="hover:text-[#374151] transition-colors">Contact</Link>
-              <Link href="#" className="hover:text-[#374151] transition-colors">Privacy</Link>
-              <Link href="#" className="hover:text-[#374151] transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-[#374151] transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-[#374151] transition-colors">Terms</Link>
             </div>
           </div>
 
