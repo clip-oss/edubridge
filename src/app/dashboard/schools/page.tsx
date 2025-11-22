@@ -530,7 +530,12 @@ export default function SchoolsPage() {
               </div>
 
               <Button
-                onClick={handleSearch}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleSearch()
+                }}
                 disabled={loading}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg"
               >
@@ -831,7 +836,12 @@ export default function SchoolsPage() {
             </div>
 
             <Button
-              onClick={handleSearch}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleSearch()
+              }}
               disabled={loading}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg"
             >
