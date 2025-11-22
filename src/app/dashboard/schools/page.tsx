@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Globe, ChevronDown, ChevronUp, Search, Sparkles, X, Loader2 } from 'lucide-react'
+import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Globe, ChevronDown, ChevronUp, Search, Sparkles, X, Loader2, Edit3, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase'
 
 const loadingMessages = [
   { progress: 0, text: "Starting search...", tip: "Did you know? Students who apply to 5+ universities have 3x better acceptance rates." },
@@ -21,9 +22,15 @@ export default function SchoolsPage() {
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0])
   const [loadingTime, setLoadingTime] = useState(0)
-  const [showForm, setShowForm] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileComplete, setProfileComplete] = useState(false)
+  const [missingFields, setMissingFields] = useState<string[]>([])
   const abortControllerRef = useRef<AbortController | null>(null)
+  const isSearchingRef = useRef(false)
+  const supabase = createClient()
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
     grades: false,
@@ -63,6 +70,92 @@ export default function SchoolsPage() {
     scholarship_needed: false,
     language_of_instruction: 'English'
   })
+
+  // Load profile data on mount
+  useEffect(() => {
+    loadProfileData()
+  }, [])
+
+  const loadProfileData = async () => {
+    setProfileLoading(true)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        // Try trial user
+        const trialUser = localStorage.getItem('trialUser')
+        if (trialUser) {
+          const parsed = JSON.parse(trialUser)
+          setFormData(prev => ({
+            ...prev,
+            interests: parsed.goal || '',
+            country_origin: parsed.country || ''
+          }))
+        }
+        setProfileLoading(false)
+        setShowSummary(true)
+        return
+      }
+
+      // Load profile from Supabase
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (profile) {
+        // Auto-fill form from profile
+        setFormData(prev => ({
+          ...prev,
+          country_origin: profile.country_origin || prev.country_origin,
+          education_level: profile.education_level || prev.education_level,
+          interests: profile.fields_of_interest || prev.interests,
+
+          // Grades
+          gpa: profile.grade_value || prev.gpa,
+          gpa_scale: profile.grade_scale || prev.gpa_scale,
+          bacalaureat: profile.bacalaureat || prev.bacalaureat,
+          ib_score: profile.ib_score || prev.ib_score,
+          a_levels: profile.a_levels || prev.a_levels,
+          abitur: profile.abitur || prev.abitur,
+
+          // Test scores
+          ielts: profile.ielts || prev.ielts,
+          toefl: profile.toefl || prev.toefl,
+          duolingo: profile.duolingo || prev.duolingo,
+          sat: profile.sat || prev.sat,
+          act: profile.act || prev.act,
+
+          // Preferences
+          preferred_countries: profile.preferred_countries?.join(', ') || prev.preferred_countries,
+          budget_max: profile.budget_max || prev.budget_max,
+          scholarship_needed: profile.scholarship_needed || prev.scholarship_needed,
+          degree_type: profile.degree_type || prev.degree_type
+        }))
+
+        // Check profile completeness
+        const missing: string[] = []
+        if (!profile.country_origin) missing.push('Country of origin')
+        if (!profile.education_level) missing.push('Education level')
+        if (!profile.grade_value && !profile.bacalaureat && !profile.ib_score) missing.push('Academic grades')
+
+        setMissingFields(missing)
+        setProfileComplete(missing.length === 0)
+      } else {
+        setMissingFields(['Country of origin', 'Education level', 'Academic grades'])
+        setProfileComplete(false)
+      }
+
+      setShowSummary(true)
+    } catch (error) {
+      console.error('Error loading profile:', error)
+      setShowSummary(true)
+    } finally {
+      setProfileLoading(false)
+    }
+  }
 
   // Progress animation effect
   useEffect(() => {
@@ -121,10 +214,20 @@ export default function SchoolsPage() {
   }
 
   const handleSearch = async () => {
+    // Prevent double API calls
+    if (isSearchingRef.current || loading) {
+      console.log('Search already in progress, ignoring click')
+      return
+    }
+
+    isSearchingRef.current = true
     setLoading(true)
     setShowForm(false)
+    setShowSummary(false)
     setError(null)
     setLoadingProgress(0)
+
+    console.log('Starting university search...', new Date().toISOString())
 
     // Create abort controller for this request
     abortControllerRef.current = new AbortController()
@@ -185,10 +288,12 @@ export default function SchoolsPage() {
       }
       console.error('Error:', error)
       setError('Failed to find universities. Please try again.')
-      setShowForm(true)
+      setShowSummary(true)
     } finally {
       setLoading(false)
+      isSearchingRef.current = false
       abortControllerRef.current = null
+      console.log('Search completed', new Date().toISOString())
     }
   }
 
@@ -212,7 +317,114 @@ export default function SchoolsPage() {
           </div>
         </div>
 
-        {showForm ? (
+        {/* Profile Loading */}
+        {profileLoading ? (
+          <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6] mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading your profile...</p>
+          </div>
+        ) : showSummary && !loading && schools.length === 0 ? (
+          /* Summary View */
+          <div className="space-y-6">
+            {/* Profile Completeness Warning */}
+            {!profileComplete && missingFields.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-amber-800">Complete your profile for better matches</p>
+                    <p className="text-sm text-amber-600 mt-1">
+                      Missing: {missingFields.join(', ')}
+                    </p>
+                    <Link href="/dashboard/profile" className="text-sm text-amber-700 underline mt-2 inline-block">
+                      Complete Profile →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Search Summary Card */}
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-[#374151]">Search Summary</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowSummary(false)
+                    setShowForm(true)
+                  }}
+                  className="text-sm"
+                >
+                  <Edit3 className="w-4 h-4 mr-1" />
+                  Edit Details
+                </Button>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-500">Degree Type</span>
+                  <span className="font-medium">{formData.degree_type}</span>
+                </div>
+                {formData.interests && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-500">Field of Interest</span>
+                    <span className="font-medium">{formData.interests}</span>
+                  </div>
+                )}
+                {formData.preferred_countries && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-500">Preferred Countries</span>
+                    <span className="font-medium">{formData.preferred_countries}</span>
+                  </div>
+                )}
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-500">Budget</span>
+                  <span className="font-medium">Up to ${formData.budget_max.toLocaleString()}/year</span>
+                </div>
+                {(formData.gpa || formData.bacalaureat || formData.ib_score) && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-500">Your Grades</span>
+                    <span className="font-medium">
+                      {formData.gpa && `GPA ${formData.gpa}`}
+                      {formData.bacalaureat && `Bac ${formData.bacalaureat}`}
+                      {formData.ib_score && `IB ${formData.ib_score}`}
+                    </span>
+                  </div>
+                )}
+                {(formData.ielts || formData.toefl) && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-500">English Tests</span>
+                    <span className="font-medium">
+                      {formData.ielts && `IELTS ${formData.ielts}`}
+                      {formData.ielts && formData.toefl && ', '}
+                      {formData.toefl && `TOEFL ${formData.toefl}`}
+                    </span>
+                  </div>
+                )}
+                {formData.scholarship_needed && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-500">Scholarship</span>
+                    <span className="font-medium text-green-600">Needed</span>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                onClick={handleSearch}
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg"
+              >
+                <Search className="w-5 h-5 mr-2" />
+                Find My Universities
+              </Button>
+              <p className="text-xs text-gray-400 text-center mt-3">
+                This search usually takes 1-2 minutes
+              </p>
+            </div>
+          </div>
+        ) : showForm ? (
           <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
             {/* Profile Section */}
             <div className="mb-4">
@@ -511,12 +723,15 @@ export default function SchoolsPage() {
         ) : (
           <>
             <Button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                setShowSummary(true)
+                setSchools([])
+              }}
               variant="outline"
               className="mb-6"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Modify Search
+              New Search
             </Button>
 
             {loading ? (
