@@ -31,7 +31,6 @@ export default function SchoolsPage() {
   const [loadedFromProfile, setLoadedFromProfile] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
   const isSearchingRef = useRef(false)
-  const searchIdRef = useRef(0)
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
     grades: false,
@@ -74,6 +73,7 @@ export default function SchoolsPage() {
 
   // Load profile data on mount
   useEffect(() => {
+    console.log('=== COMPONENT MOUNTED ===')
     loadProfileData()
   }, [])
 
@@ -251,16 +251,23 @@ export default function SchoolsPage() {
   }
 
   const handleSearch = async () => {
-    // Prevent double API calls - check BOTH ref and state
-    if (isSearchingRef.current || loading) {
-      console.log('BLOCKED: Search already in progress, ignoring duplicate call')
+    console.log('=== SEARCH FUNCTION CALLED ===', Date.now())
+
+    // HARD LOCK - prevent ANY duplicate
+    if (isSearchingRef.current) {
+      console.log('SEARCH LOCKED - IGNORING DUPLICATE')
       return
     }
 
-    // Set ref FIRST, before anything else
+    // Set lock IMMEDIATELY
     isSearchingRef.current = true
-    const currentSearchId = ++searchIdRef.current
-    console.log('=== API CALLED ===', new Date().toISOString(), 'Search ID:', currentSearchId)
+    console.log('LOCK ACQUIRED')
+
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      console.log('Aborting previous request')
+      abortControllerRef.current.abort()
+    }
 
     setLoading(true)
     setShowForm(false)
@@ -268,22 +275,23 @@ export default function SchoolsPage() {
     setError(null)
     setLoadingProgress(0)
 
-    // Create abort controller with 3 minute timeout
+    // Create new abort controller with 3 minute timeout
     abortControllerRef.current = new AbortController()
-    const currentController = abortControllerRef.current
     const timeoutId = setTimeout(() => {
       console.log('Request timeout after 3 minutes')
-      currentController.abort()
-    }, 180000) // 3 minute timeout
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }, 180000)
 
     try {
       const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
 
-      console.log('Fetching universities from webhook...')
+      console.log('=== FETCH STARTING ===', Date.now())
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: currentController.signal,
+        signal: abortControllerRef.current.signal,
         body: JSON.stringify({
           user_name: user.name || 'Student',
           education_level: formData.education_level,
@@ -315,13 +323,8 @@ export default function SchoolsPage() {
 
       const data = await response.json()
       clearTimeout(timeoutId)
-      console.log('API Response received:', data)
-
-      // Check if this is a stale response
-      if (currentSearchId !== searchIdRef.current) {
-        console.log('Stale response ignored, search ID mismatch:', currentSearchId, '!==', searchIdRef.current)
-        return
-      }
+      console.log('=== FETCH COMPLETE ===', Date.now())
+      console.log('API Response:', data)
 
       setLoadingProgress(100)
 
@@ -338,37 +341,28 @@ export default function SchoolsPage() {
         throw new Error('Failed to find universities')
       }
 
-      console.log(`Found ${universities.length} universities, setting state...`)
+      console.log(`Found ${universities.length} universities`)
       setSchools(universities)
-      console.log('Schools state updated')
+
     } catch (error: any) {
       clearTimeout(timeoutId)
 
       if (error.name === 'AbortError') {
-        // User cancelled or timeout
-        console.log('Request was cancelled or timed out')
-        if (currentSearchId === searchIdRef.current) {
-          setError('Search timed out. Please try again.')
-          setShowSummary(true)
-        }
+        console.log('Request was aborted')
+        setError('Search was cancelled. Please try again.')
+        setShowSummary(true)
         return
       }
-      console.error('Error:', error)
-      if (currentSearchId === searchIdRef.current) {
-        setError('Failed to find universities. Please try again.')
-        setShowSummary(true)
-      }
+
+      console.error('Search error:', error)
+      setError('Failed to find universities. Please try again.')
+      setShowSummary(true)
+
     } finally {
-      // Only reset state if this is still the current search
-      if (currentSearchId === searchIdRef.current) {
-        console.log('Finally block running, resetting state...')
-        setLoading(false)
-        isSearchingRef.current = false
-        abortControllerRef.current = null
-        console.log('=== Search completed ===', new Date().toISOString())
-      } else {
-        console.log('Skipping state reset for stale search:', currentSearchId)
-      }
+      console.log('=== RELEASING LOCK ===')
+      setLoading(false)
+      isSearchingRef.current = false
+      abortControllerRef.current = null
     }
   }
 
