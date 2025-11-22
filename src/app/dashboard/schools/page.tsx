@@ -75,6 +75,9 @@ export default function SchoolsPage() {
   useEffect(() => {
     console.log('=== COMPONENT MOUNTED ===')
     loadProfileData()
+    return () => {
+      console.log('=== COMPONENT UNMOUNTED - THIS IS THE PROBLEM! ===')
+    }
   }, [])
 
   const loadProfileData = async () => {
@@ -365,6 +368,7 @@ export default function SchoolsPage() {
       }
 
       console.error('Search error:', error)
+      console.log('SETTING ERROR STATE - going back to summary')
       setError('Failed to find universities. Please try again.')
       setShowSummary(true)
 
