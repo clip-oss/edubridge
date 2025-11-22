@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Globe, ChevronDown, ChevronUp, Search, Sparkles, X, Loader2, Edit3, AlertCircle } from 'lucide-react'
+import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Globe, ChevronDown, ChevronUp, Search, Sparkles, X, Loader2, Edit3, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
@@ -28,6 +28,7 @@ export default function SchoolsPage() {
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileComplete, setProfileComplete] = useState(false)
   const [missingFields, setMissingFields] = useState<string[]>([])
+  const [loadedFromProfile, setLoadedFromProfile] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
   const isSearchingRef = useRef(false)
   const supabase = createClient()
@@ -106,43 +107,73 @@ export default function SchoolsPage() {
         .single()
 
       if (profile) {
+        console.log('Profile loaded:', profile)
+
+        // Parse test_scores JSONB array
+        const testScores = profile.test_scores || []
+        console.log('Test scores:', testScores)
+
+        // Extract scores from test_scores array
+        const getTestScore = (testName: string) => {
+          const test = testScores.find((t: any) =>
+            t.test_name?.toLowerCase().includes(testName.toLowerCase()) ||
+            t.name?.toLowerCase().includes(testName.toLowerCase())
+          )
+          return test?.score || test?.value || ''
+        }
+
         // Auto-fill form from profile
-        setFormData(prev => ({
-          ...prev,
-          country_origin: profile.country_origin || prev.country_origin,
-          education_level: profile.education_level || prev.education_level,
-          interests: profile.fields_of_interest || prev.interests,
+        const newFormData = {
+          country_origin: profile.country_origin || '',
+          education_level: profile.education_level || 'High School',
+          interests: profile.fields_of_interest || '',
 
           // Grades
-          gpa: profile.grade_value || prev.gpa,
-          gpa_scale: profile.grade_scale || prev.gpa_scale,
-          bacalaureat: profile.bacalaureat || prev.bacalaureat,
-          ib_score: profile.ib_score || prev.ib_score,
-          a_levels: profile.a_levels || prev.a_levels,
-          abitur: profile.abitur || prev.abitur,
+          gpa: profile.grade_value?.toString() || '',
+          gpa_scale: profile.grade_scale || '4.0',
+          bacalaureat: getTestScore('bacalaureat') || getTestScore('bac'),
+          ib_score: getTestScore('ib'),
+          a_levels: getTestScore('a-level') || getTestScore('a level'),
+          abitur: getTestScore('abitur'),
 
-          // Test scores
-          ielts: profile.ielts || prev.ielts,
-          toefl: profile.toefl || prev.toefl,
-          duolingo: profile.duolingo || prev.duolingo,
-          sat: profile.sat || prev.sat,
-          act: profile.act || prev.act,
+          // Test scores from JSONB array
+          ielts: getTestScore('ielts'),
+          toefl: getTestScore('toefl'),
+          duolingo: getTestScore('duolingo'),
+          sat: getTestScore('sat'),
+          act: getTestScore('act'),
 
           // Preferences
-          preferred_countries: profile.preferred_countries?.join(', ') || prev.preferred_countries,
-          budget_max: profile.budget_max || prev.budget_max,
-          scholarship_needed: profile.scholarship_needed || prev.scholarship_needed,
-          degree_type: profile.degree_type || prev.degree_type
-        }))
+          budget_min: profile.budget_min || 0,
+          budget_max: profile.budget_max || 50000,
+          preferred_countries: Array.isArray(profile.preferred_countries)
+            ? profile.preferred_countries.join(', ')
+            : profile.preferred_countries || '',
+          degree_type: profile.degree_type || 'Bachelor',
+          scholarship_needed: profile.scholarship_needed || false,
+          language_of_instruction: 'English'
+        }
+
+        console.log('Form data after profile load:', newFormData)
+        setFormData(prev => ({ ...prev, ...newFormData }))
+        setLoadedFromProfile(true)
 
         // Check profile completeness
         const missing: string[] = []
         if (!profile.country_origin) missing.push('Country of origin')
         if (!profile.education_level) missing.push('Education level')
-        if (!profile.grade_value && !profile.bacalaureat && !profile.ib_score) missing.push('Academic grades')
+
+        // Check for grades - either GPA or any test score with grade info
+        const hasGrade = profile.grade_value ||
+          getTestScore('bacalaureat') ||
+          getTestScore('bac') ||
+          getTestScore('ib')
+        if (!hasGrade) missing.push('Academic grades')
 
         setMissingFields(missing)
         setProfileComplete(missing.length === 0)
+
+        console.log('Profile complete:', missing.length === 0, 'Missing:', missing)
       } else {
         setMissingFields(['Country of origin', 'Education level', 'Academic grades'])
         setProfileComplete(false)
@@ -347,7 +378,15 @@ export default function SchoolsPage() {
             {/* Search Summary Card */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[#374151]">Search Summary</h2>
+                <div>
+                  <h2 className="text-lg font-semibold text-[#374151]">Search Summary</h2>
+                  {loadedFromProfile && (
+                    <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Loaded from your profile
+                    </p>
+                  )}
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -363,6 +402,16 @@ export default function SchoolsPage() {
               </div>
 
               <div className="space-y-3 mb-6">
+                {formData.country_origin && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-gray-500">Country of Origin</span>
+                    <span className="font-medium">{formData.country_origin}</span>
+                  </div>
+                )}
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-500">Education Level</span>
+                  <span className="font-medium">{formData.education_level}</span>
+                </div>
                 <div className="flex justify-between py-2 border-b border-gray-100">
                   <span className="text-gray-500">Degree Type</span>
                   <span className="font-medium">{formData.degree_type}</span>
