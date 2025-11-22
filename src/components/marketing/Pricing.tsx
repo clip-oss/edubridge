@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Check, PaperPlane, Rocket, Crown } from 'lucide-react'
+import { Check, Send, Rocket, Crown } from 'lucide-react'
 import Link from 'next/link'
 
 const plans = [
@@ -10,7 +10,7 @@ const plans = [
     subtitle: 'Free',
     price: 0,
     description: 'Perfect to get started',
-    icon: PaperPlane,
+    icon: Send,
     features: [
       '3 University matches',
       '2 Essay reviews/month',
