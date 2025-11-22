@@ -1,14 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Globe, ChevronDown, ChevronUp, Search, Sparkles } from 'lucide-react'
+import { ArrowLeft, MapPin, DollarSign, Users, ExternalLink, GraduationCap, Globe, ChevronDown, ChevronUp, Search, Sparkles, X, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+
+const loadingMessages = [
+  { progress: 0, text: "Starting search...", tip: "Did you know? Students who apply to 5+ universities have 3x better acceptance rates." },
+  { progress: 15, text: "Searching universities...", tip: "Tip: Early applications often have higher acceptance rates." },
+  { progress: 30, text: "Analyzing your profile...", tip: "Fun fact: The oldest university in the world is the University of Bologna, founded in 1088." },
+  { progress: 50, text: "Matching requirements...", tip: "Tip: A strong motivation letter can make up for slightly lower grades." },
+  { progress: 70, text: "Finding best matches...", tip: "Did you know? Many European universities offer programs in English." },
+  { progress: 85, text: "Calculating admission chances...", tip: "Tip: Scholarships aren't just for top students - many consider financial need." },
+  { progress: 95, text: "Almost done...", tip: "You're doing great! Every step brings you closer to your dream university." },
+]
 
 export default function SchoolsPage() {
   const [schools, setSchools] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0])
+  const [loadingTime, setLoadingTime] = useState(0)
   const [showForm, setShowForm] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
     grades: false,
@@ -49,6 +64,47 @@ export default function SchoolsPage() {
     language_of_instruction: 'English'
   })
 
+  // Progress animation effect
+  useEffect(() => {
+    if (!loading) {
+      setLoadingProgress(0)
+      setLoadingTime(0)
+      return
+    }
+
+    const progressInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 95) return prev
+        const increment = Math.random() * 3 + 1
+        return Math.min(prev + increment, 95)
+      })
+    }, 500)
+
+    const timeInterval = setInterval(() => {
+      setLoadingTime(prev => prev + 1)
+    }, 1000)
+
+    return () => {
+      clearInterval(progressInterval)
+      clearInterval(timeInterval)
+    }
+  }, [loading])
+
+  // Update loading message based on progress
+  useEffect(() => {
+    const message = [...loadingMessages].reverse().find(m => loadingProgress >= m.progress)
+    if (message) setLoadingMessage(message)
+  }, [loadingProgress])
+
+  const cancelSearch = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    setLoading(false)
+    setShowForm(true)
+    setError(null)
+  }
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -67,6 +123,11 @@ export default function SchoolsPage() {
   const handleSearch = async () => {
     setLoading(true)
     setShowForm(false)
+    setError(null)
+    setLoadingProgress(0)
+
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController()
 
     try {
       const user = JSON.parse(localStorage.getItem('trialUser') || '{}')
@@ -74,6 +135,7 @@ export default function SchoolsPage() {
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: abortControllerRef.current.signal,
         body: JSON.stringify({
           user_name: user.name || 'Student',
           education_level: formData.education_level,
@@ -104,6 +166,7 @@ export default function SchoolsPage() {
       })
 
       const data = await response.json()
+      setLoadingProgress(100)
 
       // Handle array response with result.universities
       if (Array.isArray(data) && data[0]?.result?.universities) {
@@ -115,12 +178,17 @@ export default function SchoolsPage() {
       } else {
         throw new Error('Failed to find universities')
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        // User cancelled - don't show error
+        return
+      }
       console.error('Error:', error)
-      alert('Failed to find universities. Please try again.')
+      setError('Failed to find universities. Please try again.')
       setShowForm(true)
     } finally {
       setLoading(false)
+      abortControllerRef.current = null
     }
   }
 
@@ -452,14 +520,75 @@ export default function SchoolsPage() {
             </Button>
 
             {loading ? (
-              <div className="grid md:grid-cols-2 gap-6">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
-                    <div className="h-40 bg-gray-200 rounded-xl mb-4" />
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
+                  {/* Animated Icon */}
+                  <div className="mb-6">
+                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse">
+                      <Search className="w-8 h-8 text-white" />
+                    </div>
                   </div>
-                ))}
+
+                  {/* Loading Message */}
+                  <h3 className="text-lg font-semibold text-[#374151] mb-2">
+                    {loadingMessage.text}
+                  </h3>
+
+                  {/* Progress Bar */}
+                  <div className="w-full h-2 bg-gray-100 rounded-full mb-4 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500"
+                      style={{ width: `${loadingProgress}%` }}
+                    />
+                  </div>
+
+                  {/* Progress Percentage */}
+                  <p className="text-sm text-gray-500 mb-4">{Math.round(loadingProgress)}% complete</p>
+
+                  {/* Time Estimate */}
+                  <p className="text-xs text-gray-400 mb-4">
+                    {loadingTime < 60
+                      ? 'This usually takes 1-2 minutes'
+                      : loadingTime < 180
+                        ? `Searching for ${Math.floor(loadingTime / 60)}:${(loadingTime % 60).toString().padStart(2, '0')}...`
+                        : 'Taking longer than expected. Please wait...'
+                    }
+                  </p>
+
+                  {/* Fun Tip */}
+                  <div className="bg-[#fffbf5] rounded-xl p-4 mb-4">
+                    <p className="text-xs text-gray-600 italic">{loadingMessage.tip}</p>
+                  </div>
+
+                  {/* Cancel Button */}
+                  <Button
+                    onClick={cancelSearch}
+                    variant="outline"
+                    className="text-sm"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel Search
+                  </Button>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
+                  <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <X className="w-8 h-8 text-red-500" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#374151] mb-2">Search Failed</h3>
+                  <p className="text-sm text-gray-500 mb-4">{error}</p>
+                  <Button
+                    onClick={() => {
+                      setError(null)
+                      setShowForm(true)
+                    }}
+                    className="bg-[#3b82f6] hover:bg-[#2563eb] text-white"
+                  >
+                    Try Again
+                  </Button>
+                </div>
               </div>
             ) : schools.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-6">
