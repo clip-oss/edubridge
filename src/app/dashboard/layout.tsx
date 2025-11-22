@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 
 const navItems = [
+  { href: '/dashboard/my-universities', label: 'My Universities', icon: GraduationCap },
   { href: '/dashboard/profile', label: 'Profile', icon: User },
   { href: '/dashboard/schools', label: 'University Finder', icon: Search },
   { href: '/dashboard/essay', label: 'Essay Checker', icon: FileText },

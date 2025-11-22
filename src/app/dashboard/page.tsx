@@ -2,172 +2,280 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { BookOpen, Target, FileCheck, MessageSquare, ArrowRight, Sparkles } from 'lucide-react'
+import {
+  BookOpen, Target, FileText, Calendar, ArrowRight, Sparkles,
+  GraduationCap, Clock, CheckCircle2, FolderOpen
+} from 'lucide-react'
 import Link from 'next/link'
 
 export default function Dashboard() {
   const router = useRouter()
-  const [user, setUser] = useState<{ name: string; email: string; country: string; goal: string } | null>(null)
-  const [progress] = useState(15)
+  const [user, setUser] = useState<any>(null)
+  const [stats, setStats] = useState({
+    profileCompletion: 15,
+    savedUniversities: 0,
+    uploadedDocuments: 0,
+    essaysWritten: 0,
+    nextDeadline: null as string | null,
+    daysUntilDeadline: 0
+  })
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
   useEffect(() => {
-    // Check if user has trial access
-    const trialUser = localStorage.getItem('trialUser')
-    const trialActive = localStorage.getItem('trialActive')
+    loadDashboardData()
+  }, [])
 
-    if (!trialUser || trialActive !== 'true') {
-      router.push('/trial')
+  const loadDashboardData = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      // Check trial access
+      const trialUser = localStorage.getItem('trialUser')
+      const trialActive = localStorage.getItem('trialActive')
+
+      if (!trialUser || trialActive !== 'true') {
+        router.push('/trial')
+        return
+      }
+
+      setUser(JSON.parse(trialUser))
+      setLoading(false)
       return
     }
 
-    setUser(JSON.parse(trialUser))
-  }, [router])
+    setUser(user)
+
+    // Load profile completion
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    // Load saved universities
+    const { data: universities } = await supabase
+      .from('saved_universities')
+      .select('*')
+      .eq('user_id', user.id)
+
+    // Load documents count
+    const { data: documents } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('user_id', user.id)
+
+    // Calculate stats
+    let profileCompletion = 15
+    if (profile) {
+      const fields = [
+        profile.full_name, profile.country_origin, profile.education_level,
+        profile.fields_of_interest, profile.preferred_countries, profile.grade_value
+      ]
+      profileCompletion = Math.round((fields.filter(f => f).length / fields.length) * 100)
+    }
+
+    // Find next deadline
+    let nextDeadline = null
+    let daysUntilDeadline = 0
+    if (universities && universities.length > 0) {
+      const upcoming = universities
+        .filter(u => new Date(u.deadline) > new Date())
+        .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+
+      if (upcoming.length > 0) {
+        nextDeadline = upcoming[0].name
+        daysUntilDeadline = Math.ceil(
+          (new Date(upcoming[0].deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+      }
+    }
+
+    setStats({
+      profileCompletion,
+      savedUniversities: universities?.length || 0,
+      uploadedDocuments: documents?.length || 0,
+      essaysWritten: 0,
+      nextDeadline,
+      daysUntilDeadline
+    })
+
+    setLoading(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6]"></div>
+      </div>
+    )
+  }
 
   if (!user) return null
 
-  const quickActions = [
-    {
-      icon: BookOpen,
-      title: 'Write Your Essay',
-      description: 'Get AI feedback on your personal statement',
-      color: 'bg-[#3b82f6]',
-      link: '/dashboard/essay'
-    },
-    {
-      icon: Target,
-      title: 'Find Schools',
-      description: 'Discover universities that match your profile',
-      color: 'bg-[#a78bfa]',
-      link: '/dashboard/schools'
-    },
-    {
-      icon: FileCheck,
-      title: 'Check Visa Requirements',
-      description: 'Get your personalized visa checklist',
-      color: 'bg-[#34d399]',
-      link: '#'
-    },
-    {
-      icon: MessageSquare,
-      title: 'Ask AI Assistant',
-      description: 'Get instant answers to your questions',
-      color: 'bg-[#ff8a65]',
-      link: '#'
-    }
-  ]
+  const userName = user.user_metadata?.full_name || user.name || user.email?.split('@')[0] || 'Student'
 
   return (
     <div>
-      {/* Trial Banner */}
-      <div className="bg-gradient-to-r from-[#3b82f6] to-[#a78bfa] text-white py-3 px-6 rounded-2xl mb-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm">
-            <Sparkles className="w-4 h-4 inline mr-2" />
-            You&apos;re on a 7-day free trial - Upgrade anytime to unlock full features
-          </p>
-          <Button size="sm" className="bg-white text-[#3b82f6] hover:bg-white/90 border-0 rounded-xl">
-            Upgrade Now
-          </Button>
-        </div>
-      </div>
-
       {/* Welcome Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#374151] mb-2">Welcome back, {user.name}!</h1>
-        <p className="text-gray-500">Let&apos;s continue building your application</p>
+        <h1 className="text-3xl font-bold text-[#374151] mb-2">Welcome back, {userName}!</h1>
+        <p className="text-gray-500">Here's your application overview</p>
       </div>
 
-      {/* Progress Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8 hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-[#374151]">Your Application Progress</h2>
-          <span className="text-2xl font-bold text-[#3b82f6]">{progress}%</span>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#3b82f6]/10 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-[#3b82f6]" />
+            </div>
+          </div>
+          <p className="text-2xl font-bold text-[#374151]">{stats.profileCompletion}%</p>
+          <p className="text-sm text-gray-500">Profile Complete</p>
         </div>
-        <Progress value={progress} className="h-3 mb-6" />
 
-        <div className="grid md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#34d399]/20 flex items-center justify-center">
-              <span className="text-[#34d399]">✓</span>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#a78bfa]/10 flex items-center justify-center">
+              <GraduationCap className="w-5 h-5 text-[#a78bfa]" />
             </div>
-            <span className="text-sm text-[#374151]">Profile Created</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#3b82f6]/20 flex items-center justify-center">
-              <span className="text-[#3b82f6] text-xs font-medium">0/5</span>
+          <p className="text-2xl font-bold text-[#374151]">{stats.savedUniversities}</p>
+          <p className="text-sm text-gray-500">Universities Saved</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#34d399]/10 flex items-center justify-center">
+              <FolderOpen className="w-5 h-5 text-[#34d399]" />
             </div>
-            <span className="text-sm text-[#374151]">Schools Selected</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-400">○</span>
+          <p className="text-2xl font-bold text-[#374151]">{stats.uploadedDocuments}</p>
+          <p className="text-sm text-gray-500">Documents</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-[#ff8a65]/10 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-[#ff8a65]" />
             </div>
-            <span className="text-sm text-gray-400">Essay Draft</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-400">○</span>
+          <p className="text-2xl font-bold text-[#374151]">
+            {stats.daysUntilDeadline > 0 ? stats.daysUntilDeadline : '—'}
+          </p>
+          <p className="text-sm text-gray-500">Days to Deadline</p>
+        </div>
+      </div>
+
+      {/* Main Actions Grid */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        {/* My Universities */}
+        <Link
+          href="/dashboard/my-universities"
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-12 h-12 rounded-xl bg-[#a78bfa] flex items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-white" />
             </div>
-            <span className="text-sm text-gray-400">Submit</span>
+            <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#3b82f6] transition-colors" />
           </div>
+          <h3 className="text-lg font-semibold text-[#374151] mb-1">My Universities</h3>
+          <p className="text-sm text-gray-500 mb-3">Track applications and deadlines</p>
+          {stats.savedUniversities > 0 ? (
+            <p className="text-sm font-medium text-[#a78bfa]">
+              {stats.savedUniversities} universities saved
+            </p>
+          ) : (
+            <p className="text-sm text-gray-400">No universities saved yet</p>
+          )}
+        </Link>
+
+        {/* Next Deadline */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-12 h-12 rounded-xl bg-[#ff8a65] flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-[#374151] mb-1">Upcoming Deadline</h3>
+          {stats.nextDeadline ? (
+            <>
+              <p className="text-sm text-gray-500 mb-3">{stats.nextDeadline}</p>
+              <p className={`text-sm font-medium ${stats.daysUntilDeadline <= 14 ? 'text-red-500' : 'text-[#ff8a65]'}`}>
+                {stats.daysUntilDeadline} days remaining
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-gray-400">No upcoming deadlines</p>
+          )}
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#374151] mb-6">Quick Actions</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action) => {
-            const Icon = action.icon
-            return (
-              <Link
-                key={action.title}
-                href={action.link}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left group block"
-              >
-                <div className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-[#374151] mb-2">{action.title}</h3>
-                <p className="text-sm text-gray-500 mb-4">{action.description}</p>
-                <span className="text-[#3b82f6] text-sm flex items-center gap-1 font-medium">
-                  Try now <ArrowRight className="w-4 h-4" />
-                </span>
-              </Link>
-            )
-          })}
-        </div>
+      <h2 className="text-xl font-bold text-[#374151] mb-4">Quick Actions</h2>
+      <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <Link
+          href="/dashboard/schools"
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-[#3b82f6] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <Target className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="font-semibold text-[#374151] mb-1">Find Universities</h3>
+          <p className="text-sm text-gray-500">Discover programs that match your profile</p>
+        </Link>
+
+        <Link
+          href="/dashboard/essay"
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-[#a78bfa] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <BookOpen className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="font-semibold text-[#374151] mb-1">Write Essay</h3>
+          <p className="text-sm text-gray-500">Get AI feedback on your essays</p>
+        </Link>
+
+        <Link
+          href="/dashboard/documents"
+          className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-[#34d399] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            <FileText className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="font-semibold text-[#374151] mb-1">Upload Documents</h3>
+          <p className="text-sm text-gray-500">Manage your application files</p>
+        </Link>
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-semibold text-[#374151] mb-6">Recent Activity</h2>
-        <div className="space-y-4">
-          <div className="flex items-start gap-4 pb-4 border-b border-gray-100">
-            <div className="w-2 h-2 rounded-full bg-[#3b82f6] mt-2" />
-            <div>
-              <p className="font-medium text-[#374151]">Profile created successfully</p>
-              <p className="text-sm text-gray-400">Just now</p>
-            </div>
+      {/* Profile Completion */}
+      {stats.profileCompletion < 100 && (
+        <div className="bg-gradient-to-r from-[#3b82f6] to-[#a78bfa] rounded-2xl p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold">Complete Your Profile</h3>
+            <span className="text-white/80">{stats.profileCompletion}%</span>
           </div>
-          <div className="flex items-start gap-4 pb-4 border-b border-gray-100">
-            <div className="w-2 h-2 rounded-full bg-[#34d399] mt-2" />
-            <div>
-              <p className="font-medium text-[#374151]">School matches available</p>
-              <p className="text-sm text-gray-400">2 minutes ago</p>
-            </div>
+          <div className="h-2 bg-white/20 rounded-full mb-4">
+            <div
+              className="h-full bg-white rounded-full transition-all duration-500"
+              style={{ width: `${stats.profileCompletion}%` }}
+            />
           </div>
-          <div className="flex items-start gap-4">
-            <div className="w-2 h-2 rounded-full bg-[#a78bfa] mt-2" />
-            <div>
-              <p className="font-medium text-[#374151]">Trial started - 7 days remaining</p>
-              <p className="text-sm text-gray-400">5 minutes ago</p>
-            </div>
-          </div>
+          <p className="text-sm text-white/80 mb-4">
+            Complete your profile to get better university matches
+          </p>
+          <Link href="/dashboard/profile">
+            <Button className="bg-white text-[#3b82f6] hover:bg-white/90 rounded-xl">
+              Complete Profile
+            </Button>
+          </Link>
         </div>
-      </div>
+      )}
     </div>
   )
 }
