@@ -51,14 +51,21 @@ export default function UniversityFinder() {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
 
-      const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
+      // Call our API route (avoids browser timeout/CORS issues)
+      const response = await fetch('/api/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
-        signal: controller.signal
+        signal: controller.signal,
+        keepalive: true
       })
 
       clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP error: ${response.status}`)
+      }
 
       const data = await response.json()
 
