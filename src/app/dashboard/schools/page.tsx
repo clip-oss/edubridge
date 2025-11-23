@@ -25,6 +25,7 @@ export default function UniversityFinder() {
     setResults([])
 
     try {
+      // Get profile from Supabase
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       const { data: profile } = await supabase
@@ -48,44 +49,72 @@ export default function UniversityFinder() {
         language_of_instruction: 'English'
       }
 
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
-
-      // Call our API route (avoids browser timeout/CORS issues)
-      const response = await fetch('/api/find-universities', {
+      // STEP 1: Start the search
+      console.log('Starting search...')
+      const startRes = await fetch('https://anaav.app.n8n.cloud/webhook/start-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-        keepalive: true
+        body: JSON.stringify(requestBody)
       })
 
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP error: ${response.status}`)
+      if (!startRes.ok) {
+        throw new Error(`Failed to start search: ${startRes.status}`)
       }
 
-      const data = await response.json()
+      const startData = await startRes.json()
+      console.log('Job started:', startData)
+      const job_id = startData.job_id
 
-      let universities = []
-      if (Array.isArray(data) && data[0]?.result?.universities) {
-        universities = data[0].result.universities
-      } else if (data?.result?.universities) {
-        universities = data.result.universities
-      } else if (Array.isArray(data)) {
-        universities = data
+      if (!job_id) {
+        throw new Error('No job_id returned')
       }
 
-      setResults(universities)
+      // STEP 2: Poll for results
+      console.log('Polling for results...')
+      const maxAttempts = 60 // 60 * 3s = 3 minutes
+      const delay = 3000 // 3 seconds
+
+      for (let i = 0; i < maxAttempts; i++) {
+        console.log(`Poll attempt ${i + 1}/${maxAttempts}`)
+
+        await new Promise(r => setTimeout(r, delay))
+
+        const pollRes = await fetch(
+          `https://anaav.app.n8n.cloud/webhook/get-universities?job_id=${encodeURIComponent(job_id)}`
+        )
+
+        const pollData = await pollRes.json()
+        console.log('Poll result:', pollData.status)
+
+        if (pollData.status === 'done') {
+          console.log('Results ready!')
+
+          // Extract universities from result
+          let universities = []
+          if (pollData.result?.universities) {
+            universities = pollData.result.universities
+          } else if (pollData.result?.result?.universities) {
+            universities = pollData.result.result.universities
+          } else if (Array.isArray(pollData.result) && pollData.result[0]?.result?.universities) {
+            universities = pollData.result[0].result.universities
+          }
+
+          setResults(universities)
+          return
+        }
+
+        if (pollData.status === 'not_found') {
+          throw new Error('Invalid job_id')
+        }
+
+        // Still processing, continue polling
+      }
+
+      throw new Error('Search timed out after 3 minutes')
 
     } catch (err: any) {
-      if (err.name === 'AbortError') {
-        setError('Request timed out after 10 minutes')
-      } else {
-        setError(err.message || 'Search failed')
-      }
+      console.error('Search error:', err)
+      setError(err.message || 'Something went wrong')
     } finally {
       setIsLoading(false)
       isSearching = false
