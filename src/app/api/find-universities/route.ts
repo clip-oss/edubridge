@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Vercel timeout config (Pro plan allows up to 60s, Enterprise up to 300s)
-// For hobby plan, max is 10s - you may need to upgrade or use a different hosting
-export const maxDuration = 300 // 5 minutes (requires Vercel Pro/Enterprise)
+// Railway has no timeout limits like Vercel - long requests work fine
 
 export async function POST(request: NextRequest) {
   try {
