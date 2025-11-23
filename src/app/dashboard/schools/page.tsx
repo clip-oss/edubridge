@@ -3,12 +3,22 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+// Global lock to prevent double calls
+let isSearching = false
+
 export default function UniversityFinder() {
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [error, setError] = useState('')
 
   const handleSearch = async () => {
+    // Global lock check
+    if (isSearching) {
+      console.log('BLOCKED - already searching')
+      return
+    }
+    isSearching = true
+
     if (isLoading) return
     setIsLoading(true)
     setError('')
@@ -39,7 +49,7 @@ export default function UniversityFinder() {
       }
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 minutes
+      const timeoutId = setTimeout(() => controller.abort(), 600000) // 10 minutes
 
       const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
@@ -65,12 +75,13 @@ export default function UniversityFinder() {
 
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        setError('Request timed out after 5 minutes')
+        setError('Request timed out after 10 minutes')
       } else {
         setError(err.message || 'Search failed')
       }
     } finally {
       setIsLoading(false)
+      isSearching = false
     }
   }
 
