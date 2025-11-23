@@ -1,63 +1,29 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function UniversityFinder() {
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [error, setError] = useState('')
-  const pollingInterval = useRef<any>(null)
-  const supabase = createClient()
 
   const handleSearch = async () => {
     if (isLoading) return
-
     setIsLoading(true)
     setError('')
     setResults([])
 
     try {
-      // Get user and profile
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not logged in')
-
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', user?.id)
         .single()
 
-      const searchId = crypto.randomUUID()
-
-      // Create search record in Supabase
-      const { error: insertError } = await supabase
-        .from('university_searches')
-        .insert({
-          id: searchId,
-          user_id: user.id,
-          status: 'searching',
-          request_data: {
-            user_name: profile?.full_name || 'Student',
-            education_level: profile?.education_level || 'High School',
-            country_origin: profile?.country || 'Moldova',
-            interests: profile?.interests || 'business',
-            gpa: profile?.gpa || '8',
-            bacalaureat: '9',
-            ielts: '8',
-            budget_min: 0,
-            budget_max: 50000,
-            preferred_countries: profile?.preferred_countries || 'uk, spain',
-            degree_type: 'Bachelor',
-            language_of_instruction: 'English'
-          }
-        })
-
-      if (insertError) throw insertError
-
-      // Trigger n8n workflow (fire and forget)
       const requestBody = {
-        search_id: searchId,
         user_name: profile?.full_name || 'Student',
         education_level: profile?.education_level || 'High School',
         country_origin: profile?.country || 'Moldova',
@@ -72,81 +38,41 @@ export default function UniversityFinder() {
         language_of_instruction: 'English'
       }
 
-      fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 minutes
+
+      const response = await fetch('https://anaav.app.n8n.cloud/webhook/find-universities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
-      }).catch(err => console.log('n8n triggered, ignoring connection errors'))
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      })
 
-      // Start polling for results
-      pollForResults(searchId)
+      clearTimeout(timeoutId)
+
+      const data = await response.json()
+
+      let universities = []
+      if (Array.isArray(data) && data[0]?.result?.universities) {
+        universities = data[0].result.universities
+      } else if (data?.result?.universities) {
+        universities = data.result.universities
+      } else if (Array.isArray(data)) {
+        universities = data
+      }
+
+      setResults(universities)
 
     } catch (err: any) {
-      console.error('Search error:', err)
-      setError(err.message)
+      if (err.name === 'AbortError') {
+        setError('Request timed out after 5 minutes')
+      } else {
+        setError(err.message || 'Search failed')
+      }
+    } finally {
       setIsLoading(false)
     }
   }
-
-  const pollForResults = (searchId: string) => {
-    let attempts = 0
-    const maxAttempts = 60 // 5 minutes max (60 * 5 seconds)
-
-    pollingInterval.current = setInterval(async () => {
-      attempts++
-      console.log(`Polling attempt ${attempts}...`)
-
-      if (attempts > maxAttempts) {
-        clearInterval(pollingInterval.current)
-        setIsLoading(false)
-        setError('Search timed out. Please try again.')
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('university_searches')
-        .select('status, results')
-        .eq('id', searchId)
-        .single()
-
-      if (error) {
-        console.error('Polling error:', error)
-        return
-      }
-
-      console.log('Status:', data?.status)
-
-      if (data?.status === 'completed' && data?.results) {
-        clearInterval(pollingInterval.current)
-
-        // Extract universities from results
-        let universities = []
-        if (Array.isArray(data.results) && data.results[0]?.result?.universities) {
-          universities = data.results[0].result.universities
-        } else if (data.results?.result?.universities) {
-          universities = data.results.result.universities
-        } else if (Array.isArray(data.results)) {
-          universities = data.results
-        }
-
-        setResults(universities)
-        setIsLoading(false)
-      } else if (data?.status === 'failed') {
-        clearInterval(pollingInterval.current)
-        setError('Search failed. Please try again.')
-        setIsLoading(false)
-      }
-    }, 5000) // Poll every 5 seconds
-  }
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingInterval.current) {
-        clearInterval(pollingInterval.current)
-      }
-    }
-  }, [])
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
