@@ -76,6 +76,7 @@ export default function UniversityFinder() {
 
       for (let i = 0; i < maxAttempts; i++) {
         console.log(`Poll attempt ${i + 1}/${maxAttempts}`)
+        console.log('Polling URL:', `https://anaav.app.n8n.cloud/webhook/get-universities?job_id=${encodeURIComponent(job_id)}`)
 
         await new Promise(r => setTimeout(r, delay))
 
@@ -83,8 +84,10 @@ export default function UniversityFinder() {
           `https://anaav.app.n8n.cloud/webhook/get-universities?job_id=${encodeURIComponent(job_id)}`
         )
 
+        console.log('Poll response status:', pollRes.status)
+
         const pollData = await pollRes.json()
-        console.log('Poll result:', pollData.status)
+        console.log('Poll result RAW:', JSON.stringify(pollData, null, 2))
 
         if (pollData.status === 'done') {
           console.log('Results ready!')
